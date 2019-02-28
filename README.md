@@ -1,3 +1,3 @@
-Preconditioned Fisher Divergence GP Regression
+Universal Boosting Variational Inference
 ===
 
