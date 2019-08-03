@@ -109,7 +109,7 @@ def bbvi(logp, N, d, Diag, n_samples, lmb, adam_learning_rate=lambda itr: 1/(1+i
         
         #optimize the next component
         obj = lambda x: objective(logp, x[:d], x[d:] if Diag else x[d:].reshape((d,d)), np.atleast_2d(g_mu[:i]), 
-                                  np.atleast_2d(g_Sig[:i]), np.atleast_2d(g_Siginv[:i]), Diag, g_w[:i], lmb[i], n_samples)
+                                  np.atleast_2d(g_Sig[:i]), np.atleast_2d(g_Siginv[:i]), Diag, g_w[:i], lmb(i), n_samples)
         grd = grad(obj)
         x0 = None
         obj0 = np.inf
@@ -129,7 +129,7 @@ def bbvi(logp, N, d, Diag, n_samples, lmb, adam_learning_rate=lambda itr: 1/(1+i
                     mu0 = np.random.multivariate_normal(np.zeros(d), Sig)
                 else:
                     k = n%i
-                    mu0 = np.random.multivariate_noraml(g_mu[k-1], Sig)
+                    mu0 = np.random.multivariate_normal(g_mu[k-1], Sig)
                 L0 = np.eye(d)
                 xtmp = np.hstack((mu0, L0.reshape(d*d)))
             objtmp = obj(xtmp)

@@ -3,10 +3,7 @@ from scipy.optimize import nnls
 from autograd.scipy.misc import logsumexp
 from autograd.scipy import stats
 from autograd import grad
-
 import time 
-
-np.set_printoperations(precision=2, linewidth=1000)
 
 
 
@@ -14,7 +11,7 @@ def adam(grad, x, num_iters, learning_rate, b1=0.9, b2=0.999, eps=1e-8):
     m = np.zeros(len(x))
     v = np.zeros(len(x))
     for i in range(num_iters):
-        g = grad(x, i)
+        g = grad(x)
         m = (1-b1)*g + b1*m
         v = (1-b2)*g**2 + b2*v
         mhat = m / (1 - b1**(i+1))
@@ -28,7 +25,7 @@ def mvnlogpdf(x, mu, Sig, Siginv, Diag):
     if Diag:
         return -0.5*mu.shape[1]*np.log(2*np.pi) - 0.5*np.sum(Sig, axis=1) - 0.5*np.sum((x[:,np.newaxis,:]-mu)**2*np.exp(-Sig), axis=2)
     if len(Sig.shape) > 2:
-        return -0.5*mu.shape[1]*np.log(2*np.pi) - 0.5*np.linalg.slogdet(Sig)[1] - 0.5*((x[:, np.newaxis, :]-mu)*((Siginv*(x[:,np.newaxis,:]-mu)[:,:,np.newaixs,:]).sum(axis=3))).sum(axis=2)
+        return -0.5*mu.shape[1]*np.log(2*np.pi) - 0.5*np.linalg.slogdet(Sig)[1] - 0.5*((x[:, np.newaxis, :]-mu)*((Siginv*(x[:,np.newaxis,:]-mu)[:,:,np.newaxis,:]).sum(axis=3))).sum(axis=2)
     else:
         return -0.5*mu.shape[0]*np.log(2*np.pi) - 0.5*np.linalg.slogdet(Sig)[1] - 0.5*((x-mu)*np.linalg.solve(Sig, (x-mu).T).T).sum(axis=1)
 
@@ -37,7 +34,7 @@ def mvnlogpdf(x, mu, Sig, Siginv, Diag):
 def log_sqrt_pair_integral(mu, Sig, mui, Sigi, Diag):
     if Diag:
         Sig2 = np.log(0.5)+np.logaddexp(Sig,Sigi)
-        return -0.125*np.sum(np.exp(-lSig2)*(mu-mui)**2, axis=1) - 0.5*np.sum(Sig2, axis=1) + 0.25*np.sum(Sig) + 0.25*np.sum(Sigi, axis=1)
+        return -0.125*np.sum(np.exp(-Sig2)*(mu-mui)**2, axis=1) - 0.5*np.sum(Sig2, axis=1) + 0.25*np.sum(Sig) + 0.25*np.sum(Sigi, axis=1)
     else:
         Sig2 = 0.5*(Sig+Sigi)
         return -0.125*((mu-mui) * np.linalg.solve(Sig2, mu-mui)).sum(axis=1) - 0.5*np.linalg.slogdet(Sig2)[1] + 0.25*np.linalg.slogdet(Sig)[1] + 0.25*np.linalg.slogdet(Sigi)[1]
@@ -94,7 +91,7 @@ def sample_g(g_mu, g_Sig, g_Siginv, Diag, g_lmb, Z, n_samples):
 def hellsq_est(logf, g_mu, g_Sig, g_Siginv, Diag, g_lmb, Z, n_samples):
     samples = sample_g(g_mu, g_Sig, g_Siginv, Diag, g_lmb, Z, n_samples)
     lf = logf(samples)
-    lg = logg(samples, g_mu, g_Sig, g_Siginv, Diag, g_lmb, Z, n_samples)
+    lg = logg(samples, g_mu, g_Sig, g_Siginv, Diag, g_lmb)
     ln = np.log(n_samples)
     return 1 - np.exp(logsumexp(lf-lg-ln) - 0.5*logsumexp(2*lf-2*lg-ln))
 
@@ -135,7 +132,7 @@ def objective(logf, mu, L, Diag, g_mu, g_Sig, g_Siginv, g_lmb, logfg, n_samples)
     
     
 
-def ubvi(logf, N, d, Diag=True, n_samples, n_logfg_samples, adam_learning_rate=lambda itr: 1/(1+itr), adam_num_iters=1000, n_init=1):
+def ubvi(logf, N, d, Diag, n_samples, n_logfg_samples, adam_learning_rate=lambda itr: 1/(1+itr), adam_num_iters=1000, n_init=1):
     g_mu = np.zeros((N,d))
     # g_Sig saves the logarithm of the variance when using Diagonal covariance structure!!!
     # g_Sig saves the covariance matrix of the component distribution when using general covariance structure!!!
@@ -170,7 +167,7 @@ def ubvi(logf, N, d, Diag=True, n_samples, n_logfg_samples, adam_learning_rate=l
                 Cov = np.diag(g_Sig[k]) if Diag else g_Sig[k]
                 Cov = Cov * init_inflation
                 mu0 = np.random.multivariate_normal(g_mu[k], Cov)
-                L0 = np.random.randn(d)+g_Sig[k] if Diag else np.exp(np.random.randn)*g_Sig[k]
+                L0 = np.random.randn(d)+g_Sig[k] if Diag else np.exp(np.random.randn())*g_Sig[k]
             xtemp = np.hstack((mu0, L0)) if Diag else np.hstack((mu0, L0.reshape(d*d)))
             objtemp = obj(xtemp)
             if objtemp < obj0:
@@ -178,7 +175,7 @@ def ubvi(logf, N, d, Diag=True, n_samples, n_logfg_samples, adam_learning_rate=l
                 obj0 = objtemp
             
         #component optimization
-        optimized_params = adam(Grad, x0, num_iters=adam_num_iters, learning_rate=adam_learning_rate)
+        optimized_params = adam(grd, x0, num_iters=adam_num_iters, learning_rate=adam_learning_rate)
         g_mu[i,:] = optimized_params[:d]
         if Diag:
             g_Sig[i] = optimized_params[d:]
@@ -206,6 +203,6 @@ def ubvi(logf, N, d, Diag=True, n_samples, n_logfg_samples, adam_learning_rate=l
         hellsq[i] = hellsq_est(logf, g_mu[:i+1], g_Sig[:i+1], g_Siginv[:i+1], Diag, g_lmb[:i+1], Z[:i+1, :i+1], n_logfg_samples)
         
         #cpu time of this iteration
-        cput[i] = time.process_time - t0 
+        cput[i] = time.process_time() - t0 
         
     return g_mu, g_Sig, g_lmb, G_lmb, Z, cput, hellsq
