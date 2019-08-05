@@ -1,17 +1,17 @@
 from bbvi import mvnlogpdf
 import autograd.numpy as np
 from autograd.scipy.misc import logsumexp
-from autograd import grad
 import pickle as pk
 import matplotlib.pyplot as plt
 import bokeh.palettes as bkpl
-from bokeh.models import Span, FuncTickFormatter
+from bokeh.models import FuncTickFormatter
 import bokeh.plotting as bkp
 import bokeh.layouts as bkl
 
+
+
 plt.rc('xtick', labelsize=24)
 plt.rc('ytick', labelsize=24)
-
 pal = bkpl.colorblind['Colorblind'][8]
 pl = [pal[1], pal[0], pal[3]]
 pl.extend(pal[4:8])
@@ -38,24 +38,23 @@ if (Math.log10(tick) < 0){
 
 
 def preprocess_plot(fig, axis_font_size, log_scale):
-  fig.xaxis.axis_label_text_font_size= axis_font_size
-  fig.xaxis.major_label_text_font_size= axis_font_size
-  fig.yaxis.axis_label_text_font_size= axis_font_size
-  fig.yaxis.major_label_text_font_size= axis_font_size
-  if log_scale:
-    fig.yaxis.formatter = logFmtr
-  #fig.toolbar.logo = None
-  #fig.toolbar_location = None
+    fig.xaxis.axis_label_text_font_size= axis_font_size
+    fig.xaxis.major_label_text_font_size= axis_font_size
+    fig.yaxis.axis_label_text_font_size= axis_font_size
+    fig.yaxis.major_label_text_font_size= axis_font_size
+    if log_scale:
+        fig.yaxis.formatter = logFmtr
+
 
 def postprocess_plot(fig, legend_font_size, orientation='vertical', location='top_right', glyph_width=80, glyph_height=40):
-  fig.legend.label_text_font_size= legend_font_size
-  fig.legend.orientation=orientation
-  fig.legend.location=location
-  fig.legend.glyph_width=glyph_width
-  fig.legend.glyph_height=glyph_height
-  fig.legend.spacing=5
-  fig.xgrid.grid_line_color=None
-  fig.ygrid.grid_line_color=None
+    fig.legend.label_text_font_size= legend_font_size
+    fig.legend.orientation=orientation
+    fig.legend.location=location
+    fig.legend.glyph_width=glyph_width
+    fig.legend.glyph_height=glyph_height
+    fig.legend.spacing=5
+    fig.xgrid.grid_line_color=None
+    fig.ygrid.grid_line_color=None
 
 
 def banana(X):
@@ -65,29 +64,16 @@ def banana(X):
     y = X[:,1]
     return -x**2/200 - (y+b*x**2-100*b)**2/2 - np.log(2*np.pi*10)
 
+
 def logf(x):
-   return 0.5*banana(x)
+    return 0.5*banana(x)
+
 
 def kldiv(Mu, Sigma, W, n_samples=10000, method="ubvi", direction="forward"):
 
     b = 0.1
     X = np.random.multivariate_normal(np.zeros(2), np.array([[100, 0], [0, 1]]), n_samples)
     X[:, 1] = X[:, 1] - b*X[:, 0]**2 + 100*b
-
-    ###plot X to check
-    ##x = np.linspace(-30, 30, 600)
-    ##y = np.linspace(-50, 20, 700)
-    ##xx, yy = np.meshgrid(x, y)
-    ##x = xx.reshape(-1,1)
-    ##y = yy.reshape(-1,1)
-    ##X_contour = np.hstack((x,y))
-    ###plot the truth
-    ##Y_contour = np.exp(banana(X_contour)).reshape(700,600)
-    ##Levels = np.array([0.001, 0.0025, 0.005, 0.01, 0.015, 0.025])
-    ##plt.contour(xx, yy, Y_contour, levels=Levels, colors='black') #cmap="Blues_r")
-    ##plt.scatter(X[:, 0], X[:, 1], color='blue')
-    ##plt.scatter(forward_kl.X[:, 0], forward_kl.X[:, 1], color='red')
-    ##plt.show()
 
     lp = banana(X)
     Siginv = np.linalg.inv(Sigma)
@@ -101,12 +87,12 @@ def kldiv(Mu, Sigma, W, n_samples=10000, method="ubvi", direction="forward"):
             lq= mvnlogpdf(X, Mu[:i+1], Sigma[:i+1], Siginv[:i+1])
             lq = logsumexp(lq + np.log(W[i, :i+1]), axis=1)
         if direction == "reverse":
-          wts = (lq - lp)
-          wts -= wts.max()
-          wts = np.exp(wts)/(np.exp(wts).sum())
-          kl[i] = (wts*(lq-lp)).sum()
+            wts = (lq - lp)
+            wts -= wts.max()
+            wts = np.exp(wts)/(np.exp(wts).sum())
+            kl[i] = (wts*(lq-lp)).sum()
         else:
-          kl[i] = (lp - lq).mean()
+            kl[i] = (lp - lq).mean()
     return kl
 
     
@@ -233,15 +219,15 @@ fig.line(np.arange(fkl_bbvi2.shape[1])+1, np.percentile(fkl_bbvi2, 75, axis=0), 
 fig2 = bkp.figure(width=1000, height=500,x_axis_label='CPU Time (s)', y_axis_label='KL(p || q)', y_axis_type='log')
 preprocess_plot(fig2, '42pt', True)
 for cput, kl, nm, clrid in [(cput_ubvi, fkl_ubvi, 'UBVI', 0), (cput_bbvi, fkl_bbvi, 'BBVI-70/(n+1)', 1), (cput_bbvi2, fkl_bbvi2, 'BBVI-1/(n+1)', 2)]:
-  cput_25 = np.percentile(np.cumsum(cput, axis=1), 25, axis=0)
-  cput_50 = np.percentile(np.cumsum(cput, axis=1), 50, axis=0)
-  cput_75 = np.percentile(np.cumsum(cput, axis=1), 75, axis=0)
-  fkl_25 = np.percentile(kl, 25, axis=0)
-  fkl_50 = np.percentile(kl, 50, axis=0)
-  fkl_75 = np.percentile(kl, 75, axis=0)
-  fig2.circle(cput_50, fkl_50, color=pal[clrid], size=10)#, legend=nm)
-  fig2.segment(x0=cput_50, y0=fkl_25, x1=cput_50, y1=fkl_75, color=pal[clrid], line_width=4)#, legend=nm)
-  fig2.segment(x0=cput_25, y0=fkl_50, x1=cput_75, y1=fkl_50, color=pal[clrid], line_width=4)#, legend=nm)
+    cput_25 = np.percentile(np.cumsum(cput, axis=1), 25, axis=0)
+    cput_50 = np.percentile(np.cumsum(cput, axis=1), 50, axis=0)
+    cput_75 = np.percentile(np.cumsum(cput, axis=1), 75, axis=0)
+    fkl_25 = np.percentile(kl, 25, axis=0)
+    fkl_50 = np.percentile(kl, 50, axis=0)
+    fkl_75 = np.percentile(kl, 75, axis=0)
+    fig2.circle(cput_50, fkl_50, color=pal[clrid], size=10)#, legend=nm)
+    fig2.segment(x0=cput_50, y0=fkl_25, x1=cput_50, y1=fkl_75, color=pal[clrid], line_width=4)#, legend=nm)
+    fig2.segment(x0=cput_25, y0=fkl_50, x1=cput_75, y1=fkl_50, color=pal[clrid], line_width=4)#, legend=nm)
 
 
 #plot the KL
@@ -262,15 +248,15 @@ fig3.line(np.arange(rkl_bbvi2.shape[1])+1, np.percentile(rkl_bbvi2, 75, axis=0),
 fig4 = bkp.figure(width=1000, height=500,x_axis_label='CPU Time (s)', y_axis_label='KL(q || p)', y_axis_type='log')
 preprocess_plot(fig4, '42pt', True)
 for cput, kl, nm, clrid in [(cput_ubvi, rkl_ubvi, 'UBVI', 0), (cput_bbvi, rkl_bbvi, 'BBVI-70/(n+1)', 1), (cput_bbvi2, rkl_bbvi2, 'BBVI-1/(n+1)', 2)]:
-  cput_25 = np.percentile(np.cumsum(cput, axis=1), 25, axis=0)
-  cput_50 = np.percentile(np.cumsum(cput, axis=1), 50, axis=0)
-  cput_75 = np.percentile(np.cumsum(cput, axis=1), 75, axis=0)
-  rkl_25 = np.percentile(kl, 25, axis=0)
-  rkl_50 = np.percentile(kl, 50, axis=0)
-  rkl_75 = np.percentile(kl, 75, axis=0)
-  fig4.circle(cput_50, rkl_50, color=pal[clrid], size=10)#, legend=nm)
-  fig4.segment(x0=cput_50, y0=rkl_25, x1=cput_50, y1=rkl_75, color=pal[clrid], line_width=4)#, legend=nm)
-  fig4.segment(x0=cput_25, y0=rkl_50, x1=cput_75, y1=rkl_50, color=pal[clrid], line_width=4)#, legend=nm)
+    cput_25 = np.percentile(np.cumsum(cput, axis=1), 25, axis=0)
+    cput_50 = np.percentile(np.cumsum(cput, axis=1), 50, axis=0)
+    cput_75 = np.percentile(np.cumsum(cput, axis=1), 75, axis=0)
+    rkl_25 = np.percentile(kl, 25, axis=0)
+    rkl_50 = np.percentile(kl, 50, axis=0)
+    rkl_75 = np.percentile(kl, 75, axis=0)
+    fig4.circle(cput_50, rkl_50, color=pal[clrid], size=10)#, legend=nm)
+    fig4.segment(x0=cput_50, y0=rkl_25, x1=cput_50, y1=rkl_75, color=pal[clrid], line_width=4)#, legend=nm)
+    fig4.segment(x0=cput_25, y0=rkl_50, x1=cput_75, y1=rkl_50, color=pal[clrid], line_width=4)#, legend=nm)
 
 
 postprocess_plot(fig, '42pt')
