@@ -1,3 +1,8 @@
+"""
+TODO: redefine the function _objective() and _new_weights()
+    support the diagnal vairiance
+"""
+
 import autograd.numpy as np
 from autograd import grad
 import time
@@ -11,12 +16,26 @@ class BoostingVI(object):
         self.N = N
         self.d = d
         self.diag = diag
-        self.g_mu = np.zeros((self.N, self.d))
-        self.g_Sig = np.zeros((self.N, self.d, self.d))
-        self.g_Siginv = np.zeros((self.N, self.d, self.d))
+        self.g_mu = np.zeros((N, d))
+        self.g_Siginv = np.zeros((N, d, d))
         self.g_w = np.zeros(N)
         self.G_w = np.zeros((N,N))
         self.cput = np.zeros(N)
+        if diag:
+            # _g_Sig is the log transform of the diagnal elements of covariance when diag=True
+            self._g_Sig = np.zeros((N, d))
+        else:
+            # _g_Sig is the covariance when diag=False
+            self._g_Sig = np.zeros((N, d, d))
+            
+        
+    @property
+    def g_Sigma(self):
+        # the covariance is saved in g_Sigma
+        if self.diag:
+            return np.exp(self._g_Sig)
+        else:
+            return self._g_Sig
         
     def build(self):
         raise NotImplementedError
@@ -56,18 +75,22 @@ class GradientBoostingVI(BoostingVI):
             self.cput[i] = time.process_time() - t0
             
     def _new_component(self, i):
-        obj = lambda x, itr: -self._objective(x[:self.d], x[self.d:].reshape((self.d,self.d)), i)
+        obj = lambda x, itr: -self._objective(x[:self.d], x[self.d:] if self.diag else x[self.d:].reshape((self.d,self.d)), 
+                                              np.atleast_2d(self.g_mu[:i]), np.atleast_2d(self._g_Sig[:i]), np.atleast_2d(self.g_Siginv[:i]), self.g_w[:i], self.n_samples, self.diag)
         x0 = self._initialize(obj, i)
         grd = grad(obj)
-        optimized_params = self._adam(grd, x0, callback=lambda prms, itr, grd: self._print_perf(prms, itr, grd, self.print_every, self.d, obj))
+        optimized_params = self._adam(grd, x0, callback=lambda prms, itr, grd: self._print_perf(prms, itr, grd, self.print_every, self.d, obj, self.diag))
         print('Component optimization complete')
         return optimized_params
     
     def _update(self, i, optimized_params):
         self.g_mu[i, :] = optimized_params[:self.d]
-        L = optimized_params[self.d:].reshape((self.d, self.d))
-        self.g_Sig[i, :, :] = np.dot(L, L.T)
-        self.g_Siginv[i,:,:] = np.linalg.inv(self.g_Sig[i,:,:])
+        if self.diag:
+            self._g_lSig[i, :] = optimized_params[self.d:]
+        else:
+            L = optimized_params[self.d:].reshape((self.d, self.d))
+            self._g_Sig[i, :, :] = np.dot(L, L.T)
+            self._g_Siginv[i,:,:] = np.linalg.inv(self._g_Sig[i,:,:])
             
     def _adam(self, grad, x, b1=0.9, b2=0.999, eps=10**-8, callback=None):
         m = np.zeros(len(x))
@@ -89,12 +112,22 @@ class GradientBoostingVI(BoostingVI):
         for n in range(self.n_init):
             if i==0:
                 mu0 = np.random.multivariate_normal(np.zeros(self.d), self.init_inflation*np.eye(self.d))
-                L0 = np.eye(self.d)
+                if self.diag:
+                    lSig = np.zeros(self.d)
+                    xtmp = np.hstack((mu0, lSig))
+                else:
+                    L0 = np.eye(self.d)
+                    xtmp = np.hstack((mu0, L0.reshape(self.d*self.d)))
             else:
                 k = np.random.choice(np.arange(i), p=(self.g_w[:i]**2)/(self.g_w[:i]**2).sum())
-                mu0 = np.random.multivariate_normal(self.g_mu[k,:], self.init_inflation*self.g_Sig[k,:,:])
-                L0 = np.exp(np.random.randn())*self.g_Sig[k,:,:]
-            xtmp = np.hstack((mu0, L0.reshape(self.d*self.d)))
+                if self.diag:
+                    mu0 = self.g_mu[k,:] + np.random.randn(self.d)*np.sqrt(self.init_inflation)*np.exp(self._g_lSig[k,:])
+                    lSig = np.random.randn(self.d) + self._g_lSig[k,:] 
+                    xtmp = np.hstack((mu0, lSig))
+                else:
+                    mu0 = np.random.multivariate_normal(self.g_mu[k,:], self.init_inflation*self._g_Sig[k,:,:])
+                    L0 = np.exp(np.random.randn())*self._g_Sig[k,:,:]
+                    xtmp = np.hstack((mu0, L0.reshape(self.d*self.d)))
             objtmp = obj(xtmp, -1)
             if objtmp < obj0:
                 x0 = xtmp
@@ -105,16 +138,23 @@ class GradientBoostingVI(BoostingVI):
         else:
             return x0
         
-    def _mvnlogpdf(self, x, mu, Sig, Siginv):
-        if len(Sig.shape) > 2:
-            #(x[:,np.newaxis,:]-mu) is nxkxd; sig=kxdxd 
-            return -0.5*mu.shape[1]*np.log(2*np.pi) - 0.5*np.linalg.slogdet(Sig)[1] - 0.5*((x[:,np.newaxis,:]-mu)*((Siginv*((x[:,np.newaxis,:]-mu)[:,:,np.newaxis,:])).sum(axis=3))).sum(axis=2)
+    def mvnlogpdf(self, x, mu, Sig, Siginv, diag):
+        if diag:
+            if len(Sig.shape)>1:
+                #(x[:,np.newaxis,:]-mu) is nxkxd; sig=kxd 
+                return -0.5*mu.shape[1]*np.log(2*np.pi) - 0.5*np.sum(Sig, axis=1) - 0.5*np.sum((x[:,np.newaxis,:]-mu)**2*np.exp(-Sig), axis=2)
+            else:
+                return -0.5*len(mu)*np.log(2*np.pi) - 0.5*np.sum(Sig) - 0.5*np.sum((x-mu)**2*np.exp(-Sig), axis=1)
         else:
-            return -0.5*mu.shape[0]*np.log(2*np.pi) - 0.5*np.linalg.slogdet(Sig)[1] - 0.5*((x-mu)*np.linalg.solve(Sig, (x-mu).T).T).sum(axis=1)
-    
+            if len(Sig.shape) > 2:
+                #(x[:,np.newaxis,:]-mu) is nxkxd; sig=kxdxd 
+                return -0.5*mu.shape[1]*np.log(2*np.pi) - 0.5*np.linalg.slogdet(Sig)[1] - 0.5*((x[:,np.newaxis,:]-mu)*((Siginv*((x[:,np.newaxis,:]-mu)[:,:,np.newaxis,:])).sum(axis=3))).sum(axis=2)
+            else:
+                return -0.5*mu.shape[0]*np.log(2*np.pi) - 0.5*np.linalg.slogdet(Sig)[1] - 0.5*((x-mu)*np.linalg.solve(Sig, (x-mu).T).T).sum(axis=1)
+ 
     def _current_distance(self):
         raise NotImplementedError
     
-    def _print_perf(self, x, itr, gradient, print_every, d, obj):
+    def _print_perf(self, x, itr, gradient, print_every, d, obj, diag):
         raise NotImplementedError
     
