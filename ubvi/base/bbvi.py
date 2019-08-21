@@ -90,13 +90,6 @@ class BBVI(GradientBoostingVI):
         out = np.maximum(x+lmb, 0.)
         return out/out.sum()
 
-    def _print_perf(self, x, itr, gradient, print_every, d, obj, diag):
-        if itr == 0:
-            print("{:^30}|{:^30}|{:^30}|{:^30}|{:^30}".format('Iteration', 'Mu', 'Log(Sig)' if diag else 'Eigvals(Sig)', 'GradNorm', 'Boosting Obj'))
-        if itr % print_every == 0:
-            L = x[d:].reshape((d,d))
-            print("{:^30}|{:^30}|{:^30}|{:^30.2f}|{:^30.2f}".format(itr, str(x[:min(d,4)]), str(x[d:d+min(d,4)]) if diag else str(np.linalg.eigvalsh(np.dot(L,L.T))[:min(d,4)]), np.sqrt((gradient**2).sum()), obj(x, itr)))
-
     def _print_perf_w(self, x, itr, gradient, print_every, d, obj):
         if itr == 0:
             print("{:^30}|{:^30}|{:^30}|{:^30}".format('Iteration', 'W', 'GradNorm', 'KL'))
