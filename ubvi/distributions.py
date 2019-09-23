@@ -6,17 +6,14 @@ class Distribution(object):
     def __init__(self, d):
         self.d = d
         self.dim = None
-        
-    def logpdf(self, X):
-        raise NotImplementedError
     
-    def current_params(self):
+    def reparam(self, Params):
         raise NotImplementedError
         
-    def single_sample(self, k):
+    def logpdf(self, Params, X):
         raise NotImplementedError
         
-    def mixture_sample(self, weights):
+    def sample(self):
         raise NotImplementedError
     
     def log_sqrt_pair_integral(self):
@@ -49,7 +46,7 @@ class Gaussian(Distribution):
     
     def logpdf(self, Params, X):
         Theta = self.reparam(Params)
-        if self.d==1:
+        if len(X.shape)==1 and self.d==1:
             X = X[:,np.newaxis]
         X = np.atleast_2d(X)
         Mu = Theta['g_mu']
