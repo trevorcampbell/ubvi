@@ -5,6 +5,7 @@ import pickle as pk
 import os
 
 from distributions import Gaussian
+from optimizations import Adam
 from ubvi import UBVI
 from bbvi import BBVI
 
@@ -29,21 +30,22 @@ n_init = 1000
 print_every = 100
 
 gauss = Gaussian(d, diag)
+adam = Adam(adam_learning_rate, adam_num_iters, print_every)
 
 
-ubvi = UBVI(logf, N, gauss, n_samples, n_logfg_samples, n_init, adam_learning_rate, adam_num_iters, print_every)
+ubvi = UBVI(logf, N, gauss, adam, n_samples, n_init, n_logfg_samples)
 mixture_ubvi = ubvi.build()
 
 lmb = lambda itr : 10
-bbvi1 = BBVI(logp, N, gauss, n_samples, n_init, lmb, adam_learning_rate, adam_num_iters, print_every)
+bbvi1 = BBVI(logp, N, gauss, adam, n_samples, n_init, lmb)
 mixture_bbvi1 = bbvi1.build()
 
 lmb = lambda itr : 1.
-bbvi2 = BBVI(logp, N, gauss, n_samples, n_init, lmb, adam_learning_rate, adam_num_iters, print_every)
+bbvi2 = BBVI(logp, N, gauss, adam, n_samples, n_init, lmb)
 mixture_bbvi2 = bbvi2.build()
 
 lmb = lambda itr : 30.
-bbvi3 = BBVI(logp, N, gauss, n_samples, n_init, lmb, adam_learning_rate, adam_num_iters, print_every)
+bbvi3 = BBVI(logp, N, gauss, adam, n_samples, n_init, lmb)
 mixture_bbvi3 = bbvi3.build()
 
 
