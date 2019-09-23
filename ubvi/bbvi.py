@@ -2,15 +2,18 @@ import autograd.numpy as np
 from autograd.scipy.misc import logsumexp
 from autograd import grad
 
-from boostingvi import GradientBoostingVI
+from boostingvi import BoostingVI
 
 
 
-class BBVI(GradientBoostingVI):
+class BBVI(BoostingVI):
     
-    def __init__(self, logp, N, distribution, n_samples, n_init, lmb, adam_learning_rate, adam_num_iters, print_every):
-        super().__init__(logp, N, distribution, n_samples, n_init, adam_learning_rate, adam_num_iters, print_every)
+    def __init__(self, logp, N, distribution, optimization, n_samples, n_init, lmb):
+        super().__init__(logp, N, distribution, optimization)
         self.lmb = lmb
+        self.n_samples = n_samples
+        self.n_init = n_init
+        self.init_inflation = 1
     
     def _new_weights(self, i):
         if i==0:
@@ -53,7 +56,8 @@ class BBVI(GradientBoostingVI):
     def _simplex_sgd(self, grad, x):
         callback = None
         step_size = 0.1
-        for i in range(self.adam_num_iters):
+        num_iters = self.Opt.num_iters
+        for i in range(num_iters):
             g = grad(x, i)
             #project gradient onto simplex
             g -= g.dot(np.ones(g.shape[0]))*np.ones(g.shape[0])/g.shape[0]
@@ -77,10 +81,23 @@ class BBVI(GradientBoostingVI):
         lmb = 1./rho*(1. - u[:rho].sum())
         out = np.maximum(x+lmb, 0.)
         return out/out.sum()
+    
+    def _initialize(self, obj, i):
+        print("Initializing ... ")
+        x0 = None
+        obj0 = np.inf
+        for n in range(self.n_init):
+            xtmp = self.D.params_init(self.params[:i, :], self.g_w[:i], self.init_inflation)
+            objtmp = obj(xtmp)
+            if objtmp < obj0:
+                x0 = xtmp
+                obj0 = objtmp
+                print('improved x0: ' + str(x0) + ' with obj0 = ' + str(obj0))
+        if x0 is None:
+            raise ValueError
+        else:
+            return x0
 
 
       
-        
-    
-    
     
