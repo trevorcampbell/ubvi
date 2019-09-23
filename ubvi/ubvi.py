@@ -2,12 +2,15 @@ import autograd.numpy as np
 from scipy.optimize import nnls 
 from autograd.scipy.misc import logsumexp
 
-from boostingvi import GradientBoostingVI
+from boostingvi import BoostingVI
 
-class UBVI(GradientBoostingVI):
+class UBVI(BoostingVI):
     
-    def __init__(self, logf, N, distribution, n_samples, n_logfg_samples, n_init, adam_learning_rate, adam_num_iters, print_every):
-        super().__init__(logf, N, distribution, n_samples, n_init, adam_learning_rate, adam_num_iters, print_every)
+    def __init__(self, logf, N, distribution, optimization, n_samples, n_init, n_logfg_samples):
+        super().__init__(logf, N, distribution, optimization)
+        self.n_samples = n_samples
+        self.n_init = n_init
+        self.init_inflation = 1
         self.n_logfg_samples = n_logfg_samples
         self.Z = np.zeros((self.N, self.N))
         self._logfg = -np.inf*np.ones(self.N)
@@ -93,6 +96,22 @@ class UBVI(GradientBoostingVI):
                 g_samples[cur_idx:cur_idx+n_samps, :] = self.D.cross_sample(self.params[j], self.params[m], n_samps)
                 cur_idx += n_samps
         return g_samples
+    
+    def _initialize(self, obj, i):
+        print("Initializing ... ")
+        x0 = None
+        obj0 = np.inf
+        for n in range(self.n_init):
+            xtmp = self.D.params_init(self.params[:i, :], self.g_w[:i], self.init_inflation)
+            objtmp = obj(xtmp)
+            if objtmp < obj0:
+                x0 = xtmp
+                obj0 = objtmp
+                print('improved x0: ' + str(x0) + ' with obj0 = ' + str(obj0))
+        if x0 is None:
+            raise ValueError
+        else:
+            return x0
         
         
         
