@@ -3,6 +3,7 @@ import pickle as pk
 import os
 
 from distributions import Gaussian
+from optimizations import Adam
 from ubvi import UBVI
 from bbvi import BBVI
 
@@ -33,17 +34,18 @@ if not os.path.exists('results/'):
     os.mkdir('results')
 
 gauss = Gaussian(d, diag)
+adam = Adam(adam_learning_rate, adam_num_iters, print_every)
 
 for i in range(N_runs):
     print('RUN ' + str(i+1)+'/'+str(N_runs))
     
-    ubvi = UBVI(logf, N, gauss, n_samples, n_logfg_samples, n_init, adam_learning_rate, adam_num_iters, print_every)
+    ubvi = UBVI(logf, N, gauss, adam, n_samples, n_init, n_logfg_samples)
     cauchy_ubvi = ubvi.build()
     
-    bbvi = BBVI(cauchy, N, gauss, n_samples, n_init, lmb_good, adam_learning_rate, adam_num_iters, print_every)
+    bbvi = BBVI(cauchy, N, gauss, adam, n_samples, n_init, lmb_good)
     cauchy_bbvi = bbvi.build()
     
-    bbvi2 = BBVI(cauchy, N, gauss, n_samples, n_init, lmb_bad, adam_learning_rate, adam_num_iters, print_every)
+    bbvi2 = BBVI(cauchy, N, gauss, adam, n_samples, n_init, lmb_bad)
     cauchy_bbvi2 = bbvi2.build()
     
     if os.path.exists('results/cauchy.pk'):
