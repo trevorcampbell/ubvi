@@ -6,6 +6,7 @@ import pickle as pk
 import pystan
 
 from distributions import Gaussian
+from optimizations import Adam
 from ubvi import UBVI
 from bbvi import BBVI
 
@@ -169,17 +170,19 @@ print_every = 100
 ############################## synthetic ######################################
 
 gauss = Gaussian(d_synth, diag)
+adam = Adam(adam_learning_rate, adam_num_iters, print_every)
+
 lmb = lambda itr : 10.0/(1.+itr)
 lmb1 = lambda itr : 1.
     
 print('Synth UBVI')
-ubvi = UBVI(logf_synth, N, gauss, n_samples, n_logfg_samples, n_init, adam_learning_rate, adam_num_iters, print_every)
+ubvi = UBVI(logf_synth, N, gauss, adam, n_samples, n_init, n_logfg_samples)
 ubvi_synth = ubvi.build()
 print('Synth BBVI')
-bbvi = BBVI(logp_synth, N, gauss, n_samples, n_init, lmb, adam_learning_rate, adam_num_iters, print_every)
+bbvi = BBVI(logp_synth, N, gauss, adam, n_samples, n_init, lmb)
 bbvi_synth = bbvi.build()
 print('Synth ADVI')
-advi = BBVI(logp_synth, 1, gauss, n_samples, n_init, lmb1, adam_learning_rate, adam_num_iters, print_every)
+advi = BBVI(logp_synth, 1, gauss, adam, n_samples, n_init, lmb1)
 advi_synth = advi.build()
 
 '''    
@@ -194,13 +197,13 @@ lmb = lambda itr : 10./(1.+itr)
 lmb1 = lambda itr : 1.
     
 print('DS1 UBVI')
-ubvi = UBVI(logf_ds1, N, gauss, n_samples, n_logfg_samples, n_init, adam_learning_rate, adam_num_iters, print_every)
+ubvi = UBVI(logf_ds1, N, gauss, adam, n_samples, n_init, n_logfg_samples)
 ubvi_ds1 = ubvi.build()
 print('DS1 BBVI')
-bbvi = BBVI(logp_ds1, N, gauss, n_samples, n_init, lmb, adam_learning_rate, adam_num_iters, print_every)
+bbvi = BBVI(logp_ds1, N, gauss, adam, n_samples, n_init, lmb)
 bbvi_ds1 = bbvi.build()
 print('DS1 ADVI')
-advi = BBVI(logp_ds1, 1, gauss, n_samples, n_init, lmb1, adam_learning_rate, adam_num_iters, print_every)
+advi = BBVI(logp_ds1, 1, gauss, adam, n_samples, n_init, lmb1)
 advi_ds1 = advi.build()
    
 ''' 
@@ -215,13 +218,13 @@ lmb = lambda itr : 10./(1.+itr)
 lmb1 = lambda itr : 1.
   
 print('PHISH UBVI')
-ubvi = UBVI(logf_phish, N, gauss, n_samples, n_logfg_samples, n_init, adam_learning_rate, adam_num_iters, print_every)
+ubvi = UBVI(logf_phish, N, gauss, adam, n_samples, n_init, n_logfg_samples)
 ubvi_phish = ubvi.build()
 print('PHISH BBVI')
-bbvi = BBVI(logp_phish, N, gauss, n_samples, n_init, lmb, adam_learning_rate, adam_num_iters, print_every)
+bbvi = BBVI(logp_phish, N, gauss, adam, n_samples, n_init, lmb)
 bbvi_phish = bbvi.build()
 print('PHISH ADVI')
-advi = BBVI(logp_phish, 1, gauss, n_samples, n_init, lmb1, adam_learning_rate, adam_num_iters, print_every)
+advi = BBVI(logp_phish, 1, gauss, adam, n_samples, n_init, lmb1)
 advi_phish = advi.build()  
 
 '''
