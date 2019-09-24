@@ -3,7 +3,6 @@ from autograd import grad
 import time
 
 
-
 class BoostingVI(object):
     
     def __init__(self, target, N, distribution, optimization):
@@ -32,20 +31,33 @@ class BoostingVI(object):
         return output
         
     def _new_component(self, i):
-        obj = lambda x: -self._objective(x, self.params[:i], self.g_w[:i])
+        obj = lambda x, itr: self._objective(x, self.params[:i], self.g_w[:i])
         x0 = self._initialize(obj, i)
         grd = grad(obj)
-        opt_params = self.Opt.optimize(grd, x0)
+        opt_params = self.Opt.optimize(grd, x0, callback=lambda prms, itr, grd : self.D.print_perf(prms, itr, grd, self.Opt.print_every, obj))
         print("Comoponent optimization complete.")
         return opt_params
+    
+    def _initialize(self, obj, i):
+        print("Initializing ... ")
+        x0 = None
+        obj0 = np.inf
+        for n in range(self.n_init):
+            xtmp = self.D.params_init(self.params[:i], self.g_w[:i], self.init_inflation)
+            objtmp = obj(xtmp, -1)
+            if objtmp < obj0:
+                x0 = xtmp
+                obj0 = objtmp
+                print('improved x0: ' + str(x0) + ' with obj0 = ' + str(obj0))
+        if x0 is None:
+            raise ValueError
+        else:
+            return x0
         
     def _objective(self):
         raise NotImplementedError
         
     def _new_weights(self, i):
-        raise NotImplementedError
-        
-    def _initialize(self, i):
         raise NotImplementedError
     
     def _current_distance(self):
