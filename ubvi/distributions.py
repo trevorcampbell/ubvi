@@ -126,3 +126,15 @@ class Gaussian(Distribution):
                 L0 = np.exp(np.random.randn())*sig[k,:,:]
                 xtmp = np.hstack((mu0, L0.reshape(self.d*self.d)))
         return xtmp
+    
+    def print_perf(self, x, itr, gradient, print_every, obj):
+        if itr == 0:
+            print("{:^30}|{:^30}|{:^30}|{:^30}|{:^30}".format('Iteration', 'Mu', 'Log(Sig)' if self.diag else 'Eigvals(Sig)', 'GradNorm', 'Boosting Obj'))
+        if itr % print_every == 0:
+            if self.diag:
+                print("{:^30}|{:^30}|{:^30}|{:^30.2f}|{:^30.2f}".format(itr, str(x[:min(self.d,4)]), str(x[self.d:self.d+min(self.d,4)]), np.sqrt((gradient**2).sum()), obj(x, itr)))
+            else:
+                L = x[self.d:].reshape((self.d,self.d))
+                print("{:^30}|{:^30}|{:^30}|{:^30.2f}|{:^30.2f}".format(itr, str(x[:min(self.d,4)]), str(np.linalg.eigvalsh(np.dot(L,L.T))[:min(self.d,4)]), np.sqrt((gradient**2).sum()), obj(x, itr)))
+            
+            
