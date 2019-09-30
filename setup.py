@@ -2,6 +2,9 @@ from distutils.core import setup
 
 setup(
     name='Universal Boosting Variational Inference',
+    url='https://github.com/trevorcampbell/ubvi',
+    author='Trevor Campbell',
+    author_email='trevor@stat.ubc.ca',
     version='0.1',
     packages=['ubvi',],
     license='MIT License',
