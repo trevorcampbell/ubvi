@@ -239,7 +239,7 @@ for nm, d in zip(nms, ds):
 
     cput_bbvi[n, :bbvi[-1].shape[0]] = np.cumsum(bbvi[4])
     for i in range(bbvi[-1].shape[0]):
-      print('computing energy dist: ' + nm + ' BBVI ' + str(n+1) +'/'+str(len(fnames))+ ' results files, iter ' + str(i+1) + '/' + str(bbvi[-1].shape[0]))
+      print('computing energy dist: ' + nm + ' BVI ' + str(n+1) +'/'+str(len(fnames))+ ' results files, iter ' + str(i+1) + '/' + str(bbvi[-1].shape[0]))
       b_Sig = np.zeros((bbvi[0].shape[0], bbvi[0].shape[1], bbvi[0].shape[1]))
       for j in range(bbvi[0].shape[0]):
         di = ([j]*ubvi[0].shape[1], di1, di2)
@@ -294,9 +294,9 @@ for nm, d in zip(nms, ds):
   fig.line(np.arange(energy_ubvi.shape[1])+1, eubvi25, color=pal[0], line_dash='dashed', legend='UBVI',line_width=3)
   fig.line(np.arange(energy_ubvi.shape[1])+1, eubvi75, color=pal[0], line_dash='dashed', legend='UBVI',line_width=3)
 
-  fig.line(np.arange(energy_bbvi.shape[1])+1, ebbvi50, color=pal[1], legend='BBVI',line_width=10)
-  fig.line(np.arange(energy_bbvi.shape[1])+1, ebbvi25, color=pal[1], line_dash='dashed', legend='BBVI',line_width=3)
-  fig.line(np.arange(energy_bbvi.shape[1])+1, ebbvi75, color=pal[1], line_dash='dashed', legend='BBVI',line_width=3)
+  fig.line(np.arange(energy_bbvi.shape[1])+1, ebbvi50, color=pal[1], legend='BVI',line_width=10)
+  fig.line(np.arange(energy_bbvi.shape[1])+1, ebbvi25, color=pal[1], line_dash='dashed', legend='BVI',line_width=3)
+  fig.line(np.arange(energy_bbvi.shape[1])+1, ebbvi75, color=pal[1], line_dash='dashed', legend='BVI',line_width=3)
 
   fig.line(np.arange(energy_ubvi.shape[1])+1, np.ones(energy_ubvi.shape[1]),   color=pal[2], legend='ADVI',line_width=10)
   #3fig.line(np.arange(energy_ubvi.shape[1])+1, np.ones(energy_ubvi.shape[1])*(eadvi25), color=pal[2], line_dash='dashed', legend='ADVI',line_width=3)
@@ -308,9 +308,9 @@ for nm, d in zip(nms, ds):
   fig2.segment(x0=cubvi25, x1 = cubvi75, y0 = eubvi50, y1 = eubvi50, color=pal[0], legend='UBVI', line_width=4)
   fig2.segment(x0=cubvi50, x1 = cubvi50, y0 = eubvi25, y1 = eubvi75, color=pal[0], legend='UBVI', line_width=4)
 
-  fig2.circle(cbbvi50, ebbvi50, color=pal[1], legend='BBVI', size=20)
-  fig2.segment(x0=cbbvi25, x1 = cbbvi75, y0 = ebbvi50, y1 = ebbvi50, color=pal[1], legend='BBVI', line_width=4)
-  fig2.segment(x0=cbbvi50, x1 = cbbvi50, y0 = ebbvi25, y1 = ebbvi75, color=pal[1], legend='BBVI', line_width=4)
+  fig2.circle(cbbvi50, ebbvi50, color=pal[1], legend='BVI', size=20)
+  fig2.segment(x0=cbbvi25, x1 = cbbvi75, y0 = ebbvi50, y1 = ebbvi50, color=pal[1], legend='BVI', line_width=4)
+  fig2.segment(x0=cbbvi50, x1 = cbbvi50, y0 = ebbvi25, y1 = ebbvi75, color=pal[1], legend='BVI', line_width=4)
 
   fig2.circle(1., 1., color=pal[2], legend='ADVI', size=20)
   #fig.segment(x0=cadvi25, x1 = cadvi75, y0 = eadvi50, y1 = eadvi50, color=pal[2], legend='ADVI', line_width=4)

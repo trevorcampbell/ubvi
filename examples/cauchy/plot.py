@@ -120,8 +120,8 @@ for i in range(len(ubvis)):
 
 print('CPU Time per component:')
 print('UBVI: ' + str(cput_ubvi.mean()) + '+/-' + str(cput_ubvi.std()))
-print('BBVI: ' + str(cput_bbvi.mean()) + '+/-' + str(cput_bbvi.std()))
-print('BBVI2: ' + str(cput_bbvi2.mean()) + '+/-' + str(cput_bbvi2.std()))
+print('BVI: ' + str(cput_bbvi.mean()) + '+/-' + str(cput_bbvi.std()))
+print('BVI2: ' + str(cput_bbvi2.mean()) + '+/-' + str(cput_bbvi2.std()))
 
 
 
@@ -140,14 +140,14 @@ preprocess_plot(fig, '42pt', False)
 #plot the truth
 X = np.linspace(-20,20,4000)
 fig.line(X, np.exp(cauchy(X)), line_width=6.5, color='black', legend='p(x)')
-#plot BBVIgood
+#plot BVIgood
 lq= mvnlogpdf(X[:,np.newaxis], b_mu, b_Sig, b_Siginv)
 lq = logsumexp(lq + np.log(b_w), axis=1)
-fig.line(X, np.exp(lq), line_width=6.5, color=pal[1], legend='BBVI70')
-#plot BBVIbad
+fig.line(X, np.exp(lq), line_width=6.5, color=pal[1], legend='BVI70')
+#plot BVIbad
 lq= mvnlogpdf(X[:,np.newaxis], b2_mu, b2_Sig, b2_Siginv)
 lq = logsumexp(lq + np.log(b2_w), axis=1)
-fig.line(X, np.exp(lq), line_width=6.5, color=pal[2], legend='BBVI1')
+fig.line(X, np.exp(lq), line_width=6.5, color=pal[2], legend='BVI1')
 
 #plot UBVI
 lq_sqrt = 0.5*mvnlogpdf(X[:,np.newaxis], u_mu, u_Sig, u_Siginv)
@@ -160,17 +160,17 @@ preprocess_plot(fig2, '42pt', True)
 fig2.line(np.arange(fkl_ubvi.shape[1])+1, np.percentile(fkl_ubvi, 50, axis=0), line_width=6.5, color=pal[0])#, legend='UBVI')
 fig2.line(np.arange(fkl_ubvi.shape[1])+1, np.percentile(fkl_ubvi, 25, axis=0), line_width=6.5, color=pal[0], line_dash='dashed')
 fig2.line(np.arange(fkl_ubvi.shape[1])+1, np.percentile(fkl_ubvi, 75, axis=0), line_width=6.5, color=pal[0], line_dash='dashed')
-fig2.line(np.arange(fkl_bbvi.shape[1])+1, np.percentile(fkl_bbvi, 50, axis=0), line_width=6.5, color=pal[1])#, legend='BBVI-1/(n+1)')
+fig2.line(np.arange(fkl_bbvi.shape[1])+1, np.percentile(fkl_bbvi, 50, axis=0), line_width=6.5, color=pal[1])#, legend='BVI-1/(n+1)')
 fig2.line(np.arange(fkl_bbvi.shape[1])+1, np.percentile(fkl_bbvi, 25, axis=0), line_width=6.5, color=pal[1], line_dash='dashed')
 fig2.line(np.arange(fkl_bbvi.shape[1])+1, np.percentile(fkl_bbvi, 75, axis=0), line_width=6.5, color=pal[1], line_dash='dashed')
-fig2.line(np.arange(fkl_bbvi2.shape[1])+1, np.percentile(fkl_bbvi2, 50, axis=0), line_width=6.5, color=pal[2])#, legend='BBVI-70/(n+1)')
+fig2.line(np.arange(fkl_bbvi2.shape[1])+1, np.percentile(fkl_bbvi2, 50, axis=0), line_width=6.5, color=pal[2])#, legend='BVI-70/(n+1)')
 fig2.line(np.arange(fkl_bbvi2.shape[1])+1, np.percentile(fkl_bbvi2, 25, axis=0), line_width=6.5, color=pal[2], line_dash='dashed')
 fig2.line(np.arange(fkl_bbvi2.shape[1])+1, np.percentile(fkl_bbvi2, 75, axis=0), line_width=6.5, color=pal[2], line_dash='dashed')
 
 #plot the KL vs cput
 fig3 = bkp.figure(width=1000,height=500,x_axis_label='CPU Time (s)', y_axis_label='KL(p || q)', y_axis_type='log')
 preprocess_plot(fig3, '42pt', True)
-for cput, kl, nm, clrid in [(cput_ubvi, fkl_ubvi, 'UBVI', 0), (cput_bbvi, fkl_bbvi, 'BBVI(?)', 1), (cput_bbvi2, fkl_bbvi2, 'BBVI(??)', 2)]:
+for cput, kl, nm, clrid in [(cput_ubvi, fkl_ubvi, 'UBVI', 0), (cput_bbvi, fkl_bbvi, 'BVI(?)', 1), (cput_bbvi2, fkl_bbvi2, 'BVI(??)', 2)]:
   cput_25 = np.percentile(np.cumsum(cput, axis=1), 25, axis=0)
   cput_50 = np.percentile(np.cumsum(cput, axis=1), 50, axis=0)
   cput_75 = np.percentile(np.cumsum(cput, axis=1), 75, axis=0)
@@ -187,17 +187,17 @@ preprocess_plot(fig4, '42pt', True)
 fig4.line(np.arange(rkl_ubvi.shape[1])+1, np.percentile(rkl_ubvi, 50, axis=0), line_width=6.5, color=pal[0])#, legend='UBVI')
 fig4.line(np.arange(rkl_ubvi.shape[1])+1, np.percentile(rkl_ubvi, 25, axis=0), line_width=6.5, color=pal[0], line_dash='dashed')
 fig4.line(np.arange(rkl_ubvi.shape[1])+1, np.percentile(rkl_ubvi, 75, axis=0), line_width=6.5, color=pal[0], line_dash='dashed')
-fig4.line(np.arange(rkl_bbvi.shape[1])+1, np.percentile(rkl_bbvi, 50, axis=0), line_width=6.5, color=pal[1])#, legend='BBVI(?)')
+fig4.line(np.arange(rkl_bbvi.shape[1])+1, np.percentile(rkl_bbvi, 50, axis=0), line_width=6.5, color=pal[1])#, legend='BVI(?)')
 fig4.line(np.arange(rkl_bbvi.shape[1])+1, np.percentile(rkl_bbvi, 25, axis=0), line_width=6.5, color=pal[1], line_dash='dashed')
 fig4.line(np.arange(rkl_bbvi.shape[1])+1, np.percentile(rkl_bbvi, 75, axis=0), line_width=6.5, color=pal[1], line_dash='dashed')
-fig4.line(np.arange(rkl_bbvi2.shape[1])+1, np.percentile(rkl_bbvi2, 50, axis=0), line_width=6.5, color=pal[2])#, legend='BBVI(??)')
+fig4.line(np.arange(rkl_bbvi2.shape[1])+1, np.percentile(rkl_bbvi2, 50, axis=0), line_width=6.5, color=pal[2])#, legend='BVI(??)')
 fig4.line(np.arange(rkl_bbvi2.shape[1])+1, np.percentile(rkl_bbvi2, 25, axis=0), line_width=6.5, color=pal[2], line_dash='dashed')
 fig4.line(np.arange(rkl_bbvi2.shape[1])+1, np.percentile(rkl_bbvi2, 75, axis=0), line_width=6.5, color=pal[2], line_dash='dashed')
 
 #plot the KL vs cput
 fig5 = bkp.figure(width=1000,height=500,x_axis_label='CPU Time (s)', y_axis_label='KL(q || p)', y_axis_type='log')
 preprocess_plot(fig5, '42pt', True)
-for cput, kl, nm, clrid in [(cput_ubvi, rkl_ubvi, 'UBVI', 0), (cput_bbvi, rkl_bbvi, 'BBVI(?)', 1), (cput_bbvi2, rkl_bbvi2, 'BBVI(??)', 2)]:
+for cput, kl, nm, clrid in [(cput_ubvi, rkl_ubvi, 'UBVI', 0), (cput_bbvi, rkl_bbvi, 'BVI(?)', 1), (cput_bbvi2, rkl_bbvi2, 'BVI(??)', 2)]:
   cput_25 = np.percentile(np.cumsum(cput, axis=1), 25, axis=0)
   cput_50 = np.percentile(np.cumsum(cput, axis=1), 50, axis=0)
   cput_75 = np.percentile(np.cumsum(cput, axis=1), 75, axis=0)

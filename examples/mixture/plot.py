@@ -65,7 +65,7 @@ for i in range(len(bbvis)):
   lmb = bbvi_lmbs[i]
   lg = mvnlogpdf(X[:,np.newaxis], g_mu, g_Sig, np.linalg.inv(g_Sig))
   lg = logsumexp(lg+np.log(g_w), axis=1)
-  fig.line(X, np.exp(0.5*lg), line_width=6.5, color=pal[i+1], legend='BBVI'+str(lmb))
+  fig.line(X, np.exp(0.5*lg), line_width=6.5, color=pal[i+1], legend='BVI'+str(lmb))
 fig.line(X, np.exp(0.5*logp(X)), line_width=6.5, line_color='black', legend='p(x)') 
 g_mu, g_Sig, g_lmb, G_lmb, Z, cput = ubvi
 fig.line(X, np.exp(logg(X, g_mu, g_Sig, np.linalg.inv(g_Sig), g_lmb)), line_width=6.5, line_dash=[20, 20], color=pal[0], legend='UBVI')
