@@ -58,6 +58,27 @@ class UBVI(BoostingVI):
         else:
             lognegobj = lg_num - log_denom + np.log(1.-np.exp(lf_num-lg_num))
             return lognegobj
+    
+    def _objective_old(self, x, Params, W):
+        if W.shape[0] > 0:
+            log_denom = 0.5*logsumexp( np.array( [0., 2.*logsumexp(np.log(np.maximum(W, 1e-64)) + self.D.log_sqrt_pair_integral(x, Params))] ), b=np.array([1., -1.]))
+        else:
+            log_denom = 0.
+        h_samples = self.D.sample(x, self.n_samples)
+        lh = 0.5 * self.D.logpdf(x, h_samples)
+        lf = self.target(h_samples)
+        lg = self._logg(h_samples, W.shape[0]) + self._logfgsum
+        ln = np.log(self.n_samples)
+        #return objective
+        sgns = np.hstack((np.ones(self.n_samples), -1.*np.ones(self.n_samples)))
+        if logsumexp(lf - lh - ln) > logsumexp(lg - lh - ln):
+            logobj = logsumexp( np.hstack(( lf - lh - ln, lg - lh - ln )), b=sgns ) - log_denom
+            neglogobj = -logobj
+            return neglogobj
+        else:
+            lognegobj = logsumexp( np.hstack(( lf - lh - ln, lg - lh - ln )), b=-sgns ) - log_denom
+            return lognegobj
+
             
     def _hellsq_est(self, i):
         samples = self._sample_g(i, self.n_samples)
@@ -76,7 +97,7 @@ class UBVI(BoostingVI):
     
     def _logg(self, samples, i):
         #returns the log of g = sum_i lmb_i * g_i, g_i = N(mu_i, Sig_i)^{1/2}
-        if self.g_w[:i+1].shape[0] > 0:
+        if i > 0:
             logg_x = 0.5 * self.D.logpdf(self.params[:i+1], samples)
             return logsumexp(logg_x + np.log(np.maximum(self.g_w[:i+1], 1e-64)), axis=1)
         else:
