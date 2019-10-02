@@ -13,53 +13,65 @@ class BBVI(BoostingVI):
         self.lmb = lmb
         self.n_samples = n_samples
         self.n_init = n_init
-        self.init_inflation = 1
+        self.init_inflation = 100
     
-    def _new_weights(self, i):
+    
+    def _weights_update(self):
+        i = self.params.shape[0]
+        assert i > self.g_w.shape[0]
         print('Updating weights...')
-        if i==0:
+        if i==1:
             return 1
         else:
-            obj = lambda z, itr : self._kl_estimate(self.params[:i+1], z)
+            obj = lambda z: self._kl_estimate(self.params, z)
             grd = grad(obj)
-            x = np.ones(i+1)/float(i+1)
-            return self._simplex_sgd(grd, x)
-        
-    def _current_distance(self, i):
-        print('New weights: ' + str(self.g_w[:i+1]))
-        #compute current KL estimate
-        kl = self._kl_estimate(self.params[:i+1], self.g_w[:i+1])
-        print('New KL estimate: ' + str(kl))
+            x = np.ones(i)/float(i)
+            return self._simplex_sgd(grd, x, callback=lambda x, itr, gradient: self.print_perf_w(x, itr, gradient, obj))
     
-    def _objective(self, x, Params, W):
+    
+    def _current_distance(self):
+        print('New weights: ' + str(self.g_w))
+        i = self.params.shape[0]
+        assert self.g_w.shape[0] == i and i > 0
+        kl = self._kl_estimate(self.params, self.g_w)
+        print('New KL estimate: ' + str(kl))
+        
+    
+    def _objective(self, x, itr):
+        assert self.g_w.shape[0] == self.params.shape[0]
         h_samples = self.D.sample(x, self.n_samples)
         #compute log densities
         lf = self.target(h_samples).mean()
-        i = W.shape[0]
+        i = self.g_w.shape[0]
         if i > 0:
-            lg = self.D.logpdf(Params, h_samples)
-            lg = logsumexp(lg+np.log(np.maximum(W, 1e-64)), axis=1).mean()
+            lg = self.D.logpdf(self.params, h_samples)
+            if i==1:
+                lg = lg[:,np.newaxis]
+            lg = logsumexp(lg+np.log(np.maximum(self.g_w, 1e-64)), axis=1).mean()
         else:
             lg = 0.
         lh = self.D.logpdf(x, h_samples).mean()
         return lg + self.lmb(i)*lh - lf
+    
     
     def _kl_estimate(self, Params, W):
         out = 0.
         for k in range(W.shape[0]):
             samples = self.D.sample(Params[k], self.n_samples)
             lg = self.D.logpdf(Params, samples)
+            if len(lg.shape)==1:
+                lg = lg[:,np.newaxis]
             lg = logsumexp(lg+np.log(np.maximum(W, 1e-64)), axis=1)
             lf = self.target(samples)
             out += W[k]*(lg.mean()-lf.mean())
         return out
     
-    def _simplex_sgd(self, grad, x):
-        callback = None
+    
+    def _simplex_sgd(self, grad, x, callback=None):
         step_size = 0.1
         num_iters = self.Opt.num_iters
         for i in range(num_iters):
-            g = grad(x, i)
+            g = grad(x)
             #project gradient onto simplex
             g -= g.dot(np.ones(g.shape[0]))*np.ones(g.shape[0])/g.shape[0]
             if callback: callback(x, i, g)
@@ -74,6 +86,7 @@ class BBVI(BoostingVI):
                 x = self._simplex_projection(x)
         return x
     
+    
     def _simplex_projection(self, x):
         u = np.sort(x)[::-1]
         idcs = np.arange(1, u.shape[0]+1)
@@ -83,5 +96,11 @@ class BBVI(BoostingVI):
         out = np.maximum(x+lmb, 0.)
         return out/out.sum()
    
+    def print_perf_w(self, x, itr, gradient, obj):
+        if itr == 0:
+            print("{:^30}|{:^30}|{:^30}|{:^30}".format('Iteration', 'W', 'GradNorm', 'KL'))
+        if itr % self.Opt.print_every == 0:
+            print("{:^30}|{:^30}|{:^30.2f}|{:^30.2f}".format(itr, str(x), np.sqrt((gradient**2).sum()), obj(x)))
+
       
     
