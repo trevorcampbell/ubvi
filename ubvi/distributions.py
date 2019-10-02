@@ -47,16 +47,20 @@ class Gaussian(Distribution):
     def logpdf(self, Params, X):
         Theta = self.reparam(Params)
         if len(X.shape)==1 and self.d==1:
+            # each row an observation
             X = X[:,np.newaxis]
         X = np.atleast_2d(X)
         Mu = Theta['g_mu']
         Sig = Theta['g_Sig']
         if self.diag:
-            return -0.5*Mu.shape[1]*np.log(2*np.pi) - 0.5*np.sum(np.log(Sig), axis=1) - 0.5*np.sum((X[:,np.newaxis,:]-Mu)**2/Sig, axis=2)
+            logp = -0.5*Mu.shape[1]*np.log(2*np.pi) - 0.5*np.sum(np.log(Sig), axis=1) - 0.5*np.sum((X[:,np.newaxis,:]-Mu)**2/Sig, axis=2)
         else:
             Siginv = Theta['g_Siginv']
-            return -0.5*Mu.shape[1]*np.log(2*np.pi) - 0.5*np.linalg.slogdet(Sig)[1] - 0.5*((X[:,np.newaxis,:]-Mu)*((Siginv*((X[:,np.newaxis,:]-Mu)[:,:,np.newaxis,:])).sum(axis=3))).sum(axis=2)
-        
+            logp = -0.5*Mu.shape[1]*np.log(2*np.pi) - 0.5*np.linalg.slogdet(Sig)[1] - 0.5*((X[:,np.newaxis,:]-Mu)*((Siginv*((X[:,np.newaxis,:]-Mu)[:,:,np.newaxis,:])).sum(axis=3))).sum(axis=2)
+        if logp.shape[1]==1:
+            logp = logp[:,0]
+        return logp
+            
     def sample(self, params, n):
         std_samples = np.random.randn(n, self.d)
         mu = params[:self.d]
