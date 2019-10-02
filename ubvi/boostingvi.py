@@ -17,6 +17,7 @@ class BoostingVI(object):
         self.cput = np.zeros(N) 
         
     def build(self):
+        assert self.params.shape[0] == 0, 'The Boosting VI object can only build onece.'
         for i in range(self.N):
             t0 = time.process_time()
             optimized_params = self._new_component()
