@@ -15,7 +15,6 @@ class UBVI(BoostingVI):
         self.Z = np.zeros((self.N, self.N))
         self._logfg = -np.inf*np.ones(self.N)
         self._logfgsum = -np.inf
-        self.allow_negative = allow_negative
         
         
     def _weights_update(self):
