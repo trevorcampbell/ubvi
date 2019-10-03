@@ -70,7 +70,7 @@ class BBVI(BoostingVI):
     
     def _simplex_sgd(self, grad, x, callback=None):
         step_size = 0.1
-        for i in range(self.n_simplex_iter):
+        for i in range(self.n_simplex_iters):
             g = grad(x)
             #project gradient onto simplex
             g -= g.dot(np.ones(g.shape[0]))*np.ones(g.shape[0])/g.shape[0]

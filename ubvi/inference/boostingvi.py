@@ -22,6 +22,10 @@ class BoostingVI(object):
         for i in range(self.N):
             t0 = time.process_time()
             optimized_params = self._new_component()
+            print('new component: ' + str(optimized_params)) 
+            #print('new component shape: ' + str(optimized_params.shape)) 
+            #print('self.params.shape: ' + str(self.params.shape))
+            print('self.params: ' + str(self.params))
             self.params = np.vstack((self.params, optimized_params))
             self.g_w = np.atleast_1d(self._weights_update())
             self.G_w.append(self.g_w)

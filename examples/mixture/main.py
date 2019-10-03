@@ -5,7 +5,7 @@ import pickle as pk
 import os
 
 from ubvi.components import Gaussian
-from ubvi.optimization import adam
+from ubvi.optimization import adam as ubvi_adam
 from ubvi.inference import UBVI, BBVI
 
 
@@ -28,7 +28,7 @@ adam_num_iters = 3000
 n_init = 1000
 
 gauss = Gaussian(d, diag)
-adam = lambda grd, x0, callback = None : (grd, x0, adam_learning_rate, adam_num_iters, callback)
+adam = lambda grd, x0, callback = None : ubvi_adam(grd, x0, adam_learning_rate, adam_num_iters, callback)
 
 ubvi = UBVI(logf, N, gauss, adam, n_samples, n_init, n_logfg_samples)
 mixture_ubvi = ubvi.build()
