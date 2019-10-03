@@ -4,8 +4,8 @@ from autograd.scipy import stats
 import pickle as pk
 import os
 
-from distributions import Gaussian
-from optimizations import Adam
+from ubvi.components import Gaussian
+from ubvi.optimization import adam
 from ubvi import UBVI
 from bbvi import BBVI
 
@@ -27,11 +27,9 @@ n_logfg_samples = 10000
 adam_learning_rate= lambda itr : 0.1/np.sqrt(itr+1)
 adam_num_iters = 3000
 n_init = 1000
-print_every = 100
 
 gauss = Gaussian(d, diag)
-adam = Adam(adam_learning_rate, adam_num_iters, print_every)
-
+adam = lambda grd, x0, callback = None : (grd, x0, adam_learning_rate, adam_num_iters, callback)
 
 ubvi = UBVI(logf, N, gauss, adam, n_samples, n_init, n_logfg_samples)
 mixture_ubvi = ubvi.build()

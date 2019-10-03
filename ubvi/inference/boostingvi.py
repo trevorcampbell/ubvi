@@ -5,7 +5,7 @@ import time
 
 class BoostingVI(object):
     
-    def __init__(self, target, N, distribution, optimization):
+    def __init__(self, target, N, distribution, optimization, print_every = 10):
         self.target = target
         self.N = N
         self.D = distribution
@@ -15,6 +15,7 @@ class BoostingVI(object):
         self.params = np.empty((0, self.D.dim))
         self.components = None
         self.cput = np.zeros(N) 
+        self.print_every = print_every
         
     def build(self):
         assert self.params.shape[0] == 0, 'The Boosting VI object can only build onece.'
@@ -35,7 +36,7 @@ class BoostingVI(object):
         obj = lambda x, itr: self._objective(x, itr)
         x0 = self._initialize(obj)
         grd = grad(obj)
-        opt_params = self.Opt.optimize(grd, x0, callback=lambda prms, itr, grd : self.D.print_perf(prms, itr, grd, self.Opt.print_every, obj))
+        opt_params = self.Opt(grd, x0, callback=lambda prms, itr, grd : self.D.print_perf(prms, itr, grd, self.print_every, obj))
         print("Comoponent optimization complete.")
         return opt_params
     

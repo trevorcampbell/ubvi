@@ -1,9 +1,10 @@
 import autograd.numpy as np
 
-def adam(grd, x, learning_rate, num_iters, callback=None):
+def adam(grd, x0, learning_rate, num_iters, callback=None):
     b1=0.9
     b2=0.999
     eps=10**-8
+    x = x0.copy()
     m = np.zeros(len(x))
     v = np.zeros(len(x))
     for i in range(num_iters):

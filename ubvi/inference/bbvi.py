@@ -8,12 +8,13 @@ from boostingvi import BoostingVI
 
 class BBVI(BoostingVI):
     
-    def __init__(self, logp, N, distribution, optimization, n_samples, n_init, lmb):
+    def __init__(self, logp, N, distribution, optimization, n_samples, n_init, lmb, n_simplex_iters = 3000):
         super().__init__(logp, N, distribution, optimization)
         self.lmb = lmb
         self.n_samples = n_samples
         self.n_init = n_init
         self.init_inflation = 100
+        self.n_simplex_iters = n_simplex_iters
     
     
     def _weights_update(self):
@@ -69,8 +70,7 @@ class BBVI(BoostingVI):
     
     def _simplex_sgd(self, grad, x, callback=None):
         step_size = 0.1
-        num_iters = self.Opt.num_iters
-        for i in range(num_iters):
+        for i in range(self.n_simplex_iter):
             g = grad(x)
             #project gradient onto simplex
             g -= g.dot(np.ones(g.shape[0]))*np.ones(g.shape[0])/g.shape[0]
@@ -99,7 +99,7 @@ class BBVI(BoostingVI):
     def print_perf_w(self, x, itr, gradient, obj):
         if itr == 0:
             print("{:^30}|{:^30}|{:^30}|{:^30}".format('Iteration', 'W', 'GradNorm', 'KL'))
-        if itr % self.Opt.print_every == 0:
+        if itr % self.print_every == 0:
             print("{:^30}|{:^30}|{:^30.2f}|{:^30.2f}".format(itr, str(x), np.sqrt((gradient**2).sum()), obj(x)))
 
       
