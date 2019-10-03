@@ -1,4 +1,4 @@
-class Distribution(object):
+class Component(object):
     
     def __init__(self, d):
         self.d = d

@@ -1,6 +1,7 @@
 import autograd.numpy as np
+from component import Component
 
-class Gaussian(Distribution):
+class Gaussian(Component):
     
     def __init__(self, d, diag):
         super().__init__(d)
