@@ -1,5 +1,5 @@
 import autograd.numpy as np
-from component import Component
+from .component import Component
 
 class Gaussian(Component):
     

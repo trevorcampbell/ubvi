@@ -2,7 +2,7 @@ import autograd.numpy as np
 from scipy.optimize import nnls 
 from autograd.scipy.misc import logsumexp
 
-from boostingvi import BoostingVI
+from .boostingvi import BoostingVI
 
 class UBVI(BoostingVI):
     

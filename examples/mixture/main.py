@@ -6,8 +6,7 @@ import os
 
 from ubvi.components import Gaussian
 from ubvi.optimization import adam
-from ubvi import UBVI
-from bbvi import BBVI
+from ubvi.inference import UBVI, BBVI
 
 
 def logp(x):

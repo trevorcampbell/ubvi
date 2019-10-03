@@ -1,4 +1,4 @@
-from distutils.core import setup
+from setuptools import setup, find_packages
 
 setup(
     name='ubvi',
@@ -6,7 +6,7 @@ setup(
     author='Trevor Campbell',
     author_email='trevor@stat.ubc.ca',
     version='0.1',
-    packages=['ubvi',],
+    packages=find_packages(),
     license='MIT License',
     long_description=open('README.md').read(),
     install_requires = ['numpy', 'scipy', 'autograd'],

@@ -1,1 +1,1 @@
-from gaussian import Gaussian
+from .gaussian import Gaussian

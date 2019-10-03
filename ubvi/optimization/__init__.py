@@ -1,2 +1,2 @@
-from adam import adam
-from sgd import sgd
+from .adam import adam
+from .sgd import sgd
