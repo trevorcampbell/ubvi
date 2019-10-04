@@ -5,65 +5,75 @@ import time
 
 class BoostingVI(object):
     
-    def __init__(self, target, N, distribution, optimization, print_every = 10):
-        self.target = target
-        self.N = N
-        self.D = distribution
-        self.Opt = optimization
-        self.g_w = np.empty((0,0))
-        self.G_w = []
-        self.params = np.empty((0, self.D.dim))
-        self.components = None
-        self.cput = np.zeros(N) 
-        self.print_every = print_every
+    def __init__(self, target, component_dist, opt_alg, n_init = 10, init_inflation = 100, print_error = True):
+        self.target = target #the target log density
+        self.N = 0 #current # of components
+        self.component_dist = component_dist #component distribution object
+        self.opt_alg = opt_alg #optimization algorithm function
+        self.weights = [] #trace of weights
+        self.params = np.empty((0, self.component_dist.dim)) #??
+        self.components = None #??
+        self.cputs = [] #list of computation times for each build step
+        self.n_init = n_init #number of times to initialize each component
+        self.init_inflation = init_inflation #number of times to initialize each component
         
-    def build(self):
-        assert self.params.shape[0] == 0, 'The Boosting VI object can only build onece.'
-        for i in range(self.N):
+    def build(self, N):
+	#build the approximation up to N components
+        for i in range(self.N, N):
             t0 = time.process_time()
-            optimized_params = self._new_component()
-            print('new component: ' + str(optimized_params)) 
-            #print('new component shape: ' + str(optimized_params.shape)) 
-            #print('self.params.shape: ' + str(self.params.shape))
-            print('self.params: ' + str(self.params))
-            self.params = np.vstack((self.params, optimized_params))
-            self.g_w = np.atleast_1d(self._weights_update())
-            self.G_w.append(self.g_w)
-            self._current_distance()
-            self.cput[i] = time.process_time() - t0
-        self.components = self.D.reparam(self.params)
+	    #get a new component
+            new_param = self._build_new_component()
+            #add it to the matrix of flattened parameters
+            self.params = np.vstack((self.params, new_param))
+            #add the weights
+            self.weights.append(np.atleast_1d(self._compute_weights()))
+            #print out the current error
+            if self.print_error:
+                print('Current: ' + self._current_distance())
+            #compute the time taken for this step
+            self.cputs.append(time.process_time() - t0)
+        #??
+        self.components = self.component_dist.reparam(self.params)
+        #??
         output = self.components
         output.update([('g_w', self.g_w), ('G_w', self.G_w), ('cput', self.cput)])
+	#update self.N to the new # comps
+        self.N = N
         return output
         
-    def _new_component(self):
+    def _build_new_component(self):
+        n = self.params.shape[0]+1
         obj = lambda x, itr: self._objective(x, itr)
+        print("Initializing component " + str(n) +"... ")
         x0 = self._initialize(obj)
+        print("Initialization of component " + str(n)+ " complete, x0 = " + str(x0))
         grd = grad(obj)
-        opt_params = self.Opt(grd, x0, callback=lambda prms, itr, grd : self.D.print_perf(prms, itr, grd, self.print_every, obj))
-        print("Comoponent optimization complete.")
+        print("Optimizing component " + str(n) +"... ")
+        opt_params = self.opt_alg(x0, obj, grd, callback=lambda prms, itr, grd : self.component_dist.print_perf(prms, itr, grd, self.print_every, obj))
+        print("Optimization of component " + str(n) + " complete")
         return opt_params
     
     def _initialize(self, obj):
-        print("Initializing ... ")
         x0 = None
         obj0 = np.inf
+        #try initializing n_init times
         for n in range(self.n_init):
-            xtmp = self.D.params_init(self.params, self.g_w, self.init_inflation)
+            xtmp = self.component_dist.params_init(self.params, self.weights[-1], self.init_inflation)
             objtmp = obj(xtmp, -1)
             if objtmp < obj0:
                 x0 = xtmp
                 obj0 = objtmp
-                print('improved x0: ' + str(x0) + ' with obj0 = ' + str(obj0))
+                print('Current best initialization -- x0: ' + str(x0) + ' obj0 = ' + str(obj0))
         if x0 is None:
+            #if every single initialization had an infinite objective, just raise an error
             raise ValueError
-        else:
-            return x0
+        #return the initialized result
+        return x0
         
-    def _objective(self):
+    def _objective(self, itr):
         raise NotImplementedError
         
-    def _new_weights(self):
+    def _compute_weights(self):
         raise NotImplementedError
     
     def _current_distance(self):
