@@ -9,8 +9,8 @@ from ..optimization import simplex_sgd
 
 class BBVI(BoostingVI):
     
-    def __init__(self, logp, lmb = lambda itr : 1, n_samples = 100, n_simplex_iters = 3000, **kw):
-        super().__init__(**kw)
+    def __init__(self, logp, component_dist, opt_alg, lmb = lambda itr : 1, n_samples = 100, n_simplex_iters = 3000, **kw):
+        super().__init__(component_dist, opt_alg, **kw)
         self.logp = logp
         self.lmb = lmb
         self.n_samples = n_samples
@@ -23,7 +23,7 @@ class BBVI(BoostingVI):
             obj = lambda z: self._kl_estimate(self.params, z)
             grd = grad(obj)
             x = np.ones(self.params.shape[0])/float(self.params.shape[0])
-            return simplex_sgd(x, obj, grd, learning_rate=lambda itr : 0.1/(1+itr), num_iters=self.n_simplex_iters, x_to_str = lambda y : str(y), print_every = self.print_every)
+            return simplex_sgd(x, obj, grd, learning_rate=lambda itr : 0.1/(1+itr), num_iters=self.n_simplex_iters, callback = self.print_perf_w if self.verbose else None)
 
     def _error(self):
         return "KL Divergence", self._kl_estimate(self.params, self.weights[-1])
@@ -56,11 +56,11 @@ class BBVI(BoostingVI):
             out += wts[k]*(lg.mean()-lf.mean())
         return out
     
-    def print_perf_w(self, x, itr, gradient, obj):
-        if itr == 0:
+    def _print_perf_w(self, itr, x, obj, grd, print_every = 10):
+        if itr % 10*print_every == 0:
             print("{:^30}|{:^30}|{:^30}|{:^30}".format('Iteration', 'W', 'GradNorm', 'KL'))
-        if itr % self.print_every == 0:
-            print("{:^30}|{:^30}|{:^30.2f}|{:^30.2f}".format(itr, str(x), np.sqrt((gradient**2).sum()), obj(x)))
+        if itr % print_every == 0:
+            print("{:^30}|{:^30}|{:^30.2f}|{:^30.2f}".format(itr, str(x), np.sqrt((grd**2).sum()), obj))
 
       
     

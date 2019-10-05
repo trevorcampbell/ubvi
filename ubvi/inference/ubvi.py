@@ -6,8 +6,8 @@ from .boostingvi import BoostingVI
 
 class UBVI(BoostingVI):
     
-    def __init__(self, logp, n_samples = 100, n_logfg_samples = 100, **kw):
-        super().__init__(**kw)
+    def __init__(self, logp, component_dist, opt_alg, n_samples = 100, n_logfg_samples = 100, **kw):
+        super().__init__(component_dist, opt_alg, **kw)
         self.logp = logp
         self.n_samples = n_samples
         self.n_logfg_samples = n_logfg_samples

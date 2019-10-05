@@ -1,6 +1,6 @@
 import autograd.numpy as np
 
-def adam(x0, obj, grd, learning_rate, num_iters, x_to_str=None, print_every = None):
+def adam(x0, obj, grd, learning_rate, num_iters, callback = None):
     b1=0.9
     b2=0.999
     eps=10**-8
@@ -9,7 +9,7 @@ def adam(x0, obj, grd, learning_rate, num_iters, x_to_str=None, print_every = No
     v = np.zeros(len(x))
     for i in range(num_iters):
         g = grd(x, i)
-        if callback: callback(x, i, g)
+        if callback: callback(i, x, obj(x, i), g)
         m = (1 - b1) * g + b1 * m  # First  moment estimate.
         v = (1 - b2) * (g**2) + b2 * v  # Second moment estimate.
         mhat = m / (1 - b1**(i + 1))    # Bias correction.

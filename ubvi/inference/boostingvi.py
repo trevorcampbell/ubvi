@@ -6,7 +6,7 @@ from ..optimization.adam import adam
 
 class BoostingVI(object):
     
-    def __init__(self, component_dist, opt_alg = adam, num_iters = 1000, learning_rate = lambda itr : 1./np.sqrt(1.+itr), n_init = 10, init_inflation = 100, estimate_error = True, verbose = True, print_every=10):
+    def __init__(self, component_dist, opt_alg, n_init = 10, init_inflation = 100, estimate_error = True, verbose = True):
         self.N = 0 #current num of components
         self.component_dist = component_dist #component distribution object
         self.opt_alg = opt_alg #optimization algorithm function
@@ -18,7 +18,6 @@ class BoostingVI(object):
         self.init_inflation = init_inflation #number of times to initialize each component
         self.verbose = verbose
         self.estimate_error = estimate_error
-        self.print_every = print_every
         self.learning_rate = learning_rate
         self.num_iters = num_iters
         
@@ -38,7 +37,7 @@ class BoostingVI(object):
             #build the next component
             if self.verbose: print("Optimizing component " + str(i) +"... ")
             grd = grad(self._objective)
-            new_param = self.opt_alg(x0, self._objective, grd, self.learning_rate, self.num_iters, x_to_str=lambda x : self.component_dist.print_params(x), print_every=self.print_every)
+            new_param = self.opt_alg(x0, self._objective, grd)
             if self.verbose: print("Optimization of component " + str(i) + " complete")
 
             #add it to the matrix of flattened parameters

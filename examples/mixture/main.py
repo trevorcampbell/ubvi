@@ -14,10 +14,6 @@ def logp(x):
     lf = np.hstack(( stats.multivariate_normal.logpdf(x, 0, np.atleast_2d(0.5))[:,np.newaxis], stats.multivariate_normal.logpdf(x, 25, np.atleast_2d(5))[:,np.newaxis]))
     return logsumexp(lf + lw, axis=1)
 
-def logf(x):
-    return 0.5*logp(x)
-
-
 N = 3
 d = 1
 diag = False
@@ -26,24 +22,29 @@ n_logfg_samples = 10000
 adam_learning_rate= lambda itr : 0.1/np.sqrt(itr+1)
 adam_num_iters = 3000
 n_init = 1000
+init_inflation = 100
 
 gauss = Gaussian(d, diag)
-adam = lambda grd, x0, callback = None : ubvi_adam(grd, x0, adam_learning_rate, adam_num_iters, callback)
+adam = lambda x0, obj, grd : ubvi_adam(grd, x0, adam_learning_rate, adam_num_iters, callback = gauss.print_perf)
 
-ubvi = UBVI(logf, N, gauss, adam, n_samples, n_init, n_logfg_samples)
-mixture_ubvi = ubvi.build()
+#UBVI
+ubvi = UBVI(logp, gauss, adam, n_init = n_init, n_samples = n_samples, n_logfg_samples = n_logfg_samples, init_inflation = init_inflation)
+mixture_ubvi = ubvi.build(N)
 
+#BBVI 10
 lmb = lambda itr : 10
-bbvi1 = BBVI(logp, N, gauss, adam, n_samples, n_init, lmb)
-mixture_bbvi1 = bbvi1.build()
+bbvi1 = BBVI(logp, gauss, adam, lmb = lmb, n_init = n_init, n_samples = n_samples, init_inflation = init_inflation)
+mixture_bbvi1 = bbvi1.build(N)
 
+#BBVI 1
 lmb = lambda itr : 1.
-bbvi2 = BBVI(logp, N, gauss, adam, n_samples, n_init, lmb)
-mixture_bbvi2 = bbvi2.build()
+bbvi2 = BBVI(logp, gauss, adam, lmb = lmb, n_init = n_init, n_samples = n_samples, init_inflation = init_inflation)
+mixture_bbvi2 = bbvi2.build(N)
 
+#BBVI 30
 lmb = lambda itr : 30.
-bbvi3 = BBVI(logp, N, gauss, adam, n_samples, n_init, lmb)
-mixture_bbvi3 = bbvi3.build()
+bbvi3 = BBVI(logp, gauss, adam, lmb = lmb, n_init = n_init, n_samples = n_samples, init_inflation = init_inflation)
+mixture_bbvi3 = bbvi3.build(N)
 
 
 if not os.path.exists('results/'):
