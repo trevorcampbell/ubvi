@@ -59,7 +59,7 @@ class BBVI(BoostingVI):
     def _print_perf_w(self, itr, x, obj, grd):
         if itr == 0:
             print("{:^30}|{:^30}|{:^30}|{:^30}".format('Iteration', 'W', 'GradNorm', 'KL'))
-        print("{:^30}|{:^30}|{:^30.2f}|{:^30.2f}".format(itr, str(x), np.sqrt((grd**2).sum()), obj))
+        print("{:^30}|{:^30.3f}|{:^30.3f}|{:^30.3f}".format(itr, str(x), np.sqrt((grd**2).sum()), obj))
 
       
     

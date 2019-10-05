@@ -76,6 +76,7 @@ class BoostingVI(object):
     def _initialize(self):
         x0 = None
         obj0 = np.inf
+        t0 = time.perf_counter()
         #try initializing n_init times
         for n in range(self.n_init):
             xtmp = self.component_dist.params_init(self.params, self.weights, self.init_inflation)
@@ -83,7 +84,11 @@ class BoostingVI(object):
             if objtmp < obj0:
                 x0 = xtmp
                 obj0 = objtmp
-                if self.verbose: print('Current best initialization -- x0: ' + str(x0) + ' obj0 = ' + str(obj0))
+            if self.verbose and (n == 0 or n == self.n_init - 1 or time.perf_counter() - t0 > 0.5):
+                if n == 0:
+                    print("{:^30}|{:^30}|{:^30}".format('Iteration', 'Best x0', 'Best obj0'))
+                print("{:^30}|{:^30.3f}|{:^30.3f}".format(n, str(x0), str(obj0)))
+                t0 = time.perf_counter()
         if x0 is None:
             #if every single initialization had an infinite objective, just raise an error
             raise ValueError
