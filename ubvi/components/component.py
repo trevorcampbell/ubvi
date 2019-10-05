@@ -1,13 +1,9 @@
 class Component(object):
     
-    def __init__(self, d):
-        self.d = d
-        self.dim = None
-    
-    def reparam(self, Params):
+    def unflatten(self, params):
         raise NotImplementedError
-        
-    def logpdf(self, Params, X):
+
+    def logpdf(self, params, X):
         raise NotImplementedError
         
     def sample(self):

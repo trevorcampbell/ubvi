@@ -1,4 +1,3 @@
-import autograd.numpy as np
 
 def sgd(x0, grd, learning_rate, num_iters, callback=None):
     x = x0.copy()
