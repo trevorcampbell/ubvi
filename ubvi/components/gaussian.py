@@ -111,9 +111,9 @@ class Gaussian(Component):
         if itr == 0:
             print("{:^30}|{:^30}|{:^30}|{:^30}|{:^30}".format('Iteration', 'mu', 'Log(Sig)' if self.diag else 'Eigvals(Sig)', 'GradNorm', 'Boosting Obj'))
         if self.diag:
-            print("{:^30}|{:^30.3f}|{:^30.3f}|{:^30.3f}|{:^30.3f}".format(itr, str(x[:min(self.d,4)]), str(x[self.d:self.d+min(self.d,4)]), np.sqrt((grd**2).sum()), obj))
+            print("{:^30}|{:^30}|{:^30}|{:^30.3f}|{:^30.3f}".format(itr, str(x[:min(self.d,4)]), str(x[self.d:self.d+min(self.d,4)]), np.sqrt((grd**2).sum()), obj))
         else:
             L = x[self.d:].reshape((self.d,self.d))
-            print("{:^30}|{:^30.3f}|{:^30.3f}|{:^30.3f}|{:^30.3f}".format(itr, str(x[:min(self.d,4)]), str(np.linalg.eigvalsh(np.dot(L,L.T))[:min(self.d,4)]), np.sqrt((grd**2).sum()), obj))
+            print("{:^30}|{:^30}|{:^30}|{:^30.3f}|{:^30.3f}".format(itr, str(x[:min(self.d,4)]), str(np.linalg.eigvalsh(np.dot(L,L.T))[:min(self.d,4)]), np.sqrt((grd**2).sum()), obj))
             
             
