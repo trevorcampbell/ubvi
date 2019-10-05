@@ -19,18 +19,13 @@ d = 1
 diag = False
 n_samples = 500
 n_logfg_samples = 10000
-adam_learning_rate= lambda itr : 0.1/np.sqrt(itr+1)
+adam_learning_rate= lambda itr : 1./(itr+1)
 adam_num_iters = 3000
 n_init = 10000
 init_inflation = 100
 
 gauss = Gaussian(d, diag)
 adam = lambda x0, obj, grd : ubvi_adam(x0, obj, grd, adam_learning_rate, adam_num_iters, callback = gauss.print_perf)
-
-#BBVI 10
-lmb = lambda itr : 10
-bbvi1 = BBVI(logp, gauss, adam, lmb = lmb, n_init = n_init, n_samples = n_samples, init_inflation = init_inflation)
-mixture_bbvi1 = bbvi1.build(N)
 
 
 
@@ -40,6 +35,11 @@ mixture_ubvi = ubvi.build(N)
 
 #BBVI 1
 lmb = lambda itr : 1.
+bbvi1 = BBVI(logp, gauss, adam, lmb = lmb, n_init = n_init, n_samples = n_samples, init_inflation = init_inflation)
+mixture_bbvi1 = bbvi1.build(N)
+
+#BBVI 10
+lmb = lambda itr : 10.
 bbvi2 = BBVI(logp, gauss, adam, lmb = lmb, n_init = n_init, n_samples = n_samples, init_inflation = init_inflation)
 mixture_bbvi2 = bbvi2.build(N)
 

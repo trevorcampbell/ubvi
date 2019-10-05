@@ -25,18 +25,18 @@ class BoostingVI(object):
             t0 = time.perf_counter()
 
             #initialize the next component
-            if self.verbose: print("Initializing component " + str(i) +"... ")
+            if self.verbose: print("Initializing component " + str(i+1) +"... ")
             x0 = self._initialize()
             #if this is the first component, set the dimension of self.params
             if self.params.size == 0:
                 self.params = np.empty((0, x0.shape[0]))
-            if self.verbose: print("Initialization of component " + str(i)+ " complete, x0 = " + str(x0))
+            if self.verbose: print("Initialization of component " + str(i+1)+ " complete, x0 = " + str(x0))
             
             #build the next component
-            if self.verbose: print("Optimizing component " + str(i) +"... ")
+            if self.verbose: print("Optimizing component " + str(i+1) +"... ")
             grd = grad(self._objective)
             new_param = self.opt_alg(x0, self._objective, grd)
-            if self.verbose: print("Optimization of component " + str(i) + " complete")
+            if self.verbose: print("Optimization of component " + str(i+1) + " complete")
 
             #add it to the matrix of flattened parameters
             self.params = np.vstack((self.params, new_param))
