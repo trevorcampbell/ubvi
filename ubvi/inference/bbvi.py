@@ -42,7 +42,7 @@ class BBVI(BoostingVI):
         else:
             lg = 0.
         lh = self.component_dist.logpdf(x, h_samples).mean()
-        return lg + self.lmb(itr)*lh - lf
+        return lg + self.lmb(self.params.shape[0])*lh - lf
     
     def _kl_estimate(self, prms, wts):
         out = 0.
