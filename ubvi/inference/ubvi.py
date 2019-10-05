@@ -1,6 +1,6 @@
 import autograd.numpy as np
 from scipy.optimize import nnls 
-from autograd.scipy.misc import logsumexp
+from ..autograd import logsumexp
 
 from .boostingvi import BoostingVI
 

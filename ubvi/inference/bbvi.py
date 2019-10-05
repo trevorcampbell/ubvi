@@ -1,5 +1,5 @@
 import autograd.numpy as np
-from autograd.scipy.misc import logsumexp
+from ..autograd import logsumexp
 from autograd import grad
 
 from .boostingvi import BoostingVI
