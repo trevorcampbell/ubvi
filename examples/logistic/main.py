@@ -5,11 +5,10 @@ import time
 import pickle as pk
 import pystan
 
-from distributions import Gaussian
-from optimizations import Adam
-from ubvi import UBVI
-from bbvi import BBVI
-
+from ubvi.components import Gaussian
+from ubvi.optimization import adam as ubvi_adam
+from ubvi.inference import UBVI, BBVI
+from ubvi.autograd import logsumexp
 
 def log_cauchy(X):
   return -np.log(np.pi) - np.log(1.+X**2)
@@ -24,9 +23,6 @@ def log_logist(theta, Z, nu, mu, Sig):
     log_lik = -np.sum(np.maximum(dots, 0) + np.log1p(np.exp(-np.abs(dots))), axis=0)
     log_pri = log_multivariate_t(theta[:, :-1], mu, Sig, nu) + log_cauchy(theta[:, -1])
     return log_pri + log_lik
-
-def log_f(theta, Z, nu, mu, Sig):
-    return 0.5*log_logist(theta, Z, nu, mu, Sig)
 
 def load_data(dnm, subset_sz=None):
     data = np.load(dnm)
@@ -55,8 +51,6 @@ Y_ds1[Y_ds1 == -1] = 0
 Z_phish, X_phish, Y_phish = load_data('./phishing.npz', subset_sz)
 Y_phish[Y_phish == -1] = 0
 
-
-
 #ensure we use the same Sig each time
 np.random.seed(1)
 nu = 2.
@@ -70,11 +64,9 @@ Sig_phish = Sig_phish.T.dot(Sig_phish)
 mu_phish = np.zeros(Sig_phish.shape[0])
 np.random.seed()
 
-
 d_synth = Z_synth.shape[1]
 d_ds1 = Z_ds1.shape[1]
 d_phish = Z_phish.shape[1]
-
 
 ############################## NUTS via STAN ######################################
 
@@ -107,22 +99,14 @@ model {
 
 
 logp_synth = lambda theta : log_logist(theta, Z_synth, nu, mu_synth, Sig_synth)
-logf_synth = lambda theta : log_f(theta, Z_synth, nu, mu_synth, Sig_synth)
-
-
 logp_ds1 = lambda theta: log_logist(theta, Z_ds1, nu, mu_ds1, Sig_ds1)
-logf_ds1 = lambda theta: log_f(theta, Z_ds1, nu, mu_ds1, Sig_ds1) 
-
-
 logp_phish = lambda theta: log_logist(theta, Z_phish, nu, mu_phish, Sig_phish)
-logf_phish = lambda theta: log_f(theta, Z_phish, nu, mu_phish, Sig_phish)
 
 
 #try to make results directory if it doesn't already exist
 if not os.path.exists('results/'):
     os.mkdir('results')
     
-'''    
 #load stan models if possible
 if not os.path.exists('results/logistic_model.pk'):
     sm = pystan.StanModel(model_code=logistic_code)
@@ -133,7 +117,6 @@ else:
     f = open('results/logistic_model.pk', 'rb')
     sm = pk.load(f)
     f.close()
-
 
 logistic_data_synth = {'x': X_synth, 'y':Y_synth.astype(int), 'd': X_synth.shape[1], 'n': X_synth.shape[0], 'mu':mu_synth, 'nu':nu, 'Sig':Sig_synth}
 logistic_data_ds1 = {'x': X_ds1, 'y':Y_ds1.astype(int), 'd': X_ds1.shape[1], 'n': X_ds1.shape[0], 'mu':mu_ds1, 'nu':nu, 'Sig':Sig_ds1}
@@ -154,81 +137,79 @@ for d, nm in [(logistic_data_synth, 'synth'), (logistic_data_ds1, 'ds1'), (logis
         np.save('results/logistic_samples_'+nm+'.npy', fit.extract(permuted=False))
         tf = time.process_time()
         np.save('results/'+nm+'_mcmc_time.npy', tf-t0)
-'''   
+   
 
-    
 N = 3
 diag = True
-adam_num_iters = 1000
-n_init=100
-n_samples = 1000
+n_samples = 500
 n_logfg_samples = 10000
-adam_learning_rate= lambda itr : 1./np.sqrt(1+itr)
-print_every = 100
+adam_learning_rate= lambda itr : 1./(itr+1)
+adam_num_iters = 3000
+n_init = 10000
+init_inflation = 100
 
+adam = lambda x0, obj, grd : ubvi_adam(x0, obj, grd, adam_learning_rate, adam_num_iters, callback = gauss.print_perf)
 
 ############################## synthetic ######################################
 
 gauss = Gaussian(d_synth, diag)
-adam = Adam(adam_learning_rate, adam_num_iters, print_every)
-
-lmb = lambda itr : 10.0/(1.+itr)
-lmb1 = lambda itr : 1.
+lmb_bbvi = lambda itr : 10.0/(1.+itr)
+lmb_advi = lambda itr : 1.
     
 print('Synth UBVI')
-ubvi = UBVI(logf_synth, N, gauss, adam, n_samples, n_init, n_logfg_samples)
-ubvi_synth = ubvi.build()
-print('Synth BVI')
-bbvi = BBVI(logp_synth, N, gauss, adam, n_samples, n_init, lmb)
-bbvi_synth = bbvi.build()
-print('Synth ADVI')
-advi = BBVI(logp_synth, 1, gauss, adam, n_samples, n_init, lmb1)
-advi_synth = advi.build()
+ubvi = UBVI(logp_synth, gauss, adam, n_init = n_init, n_samples = n_samples, n_logfg_samples = n_logfg_samples, init_inflation = init_inflation)
+ubvi_synth = ubvi.build(N)
 
-'''    
+print('Synth BVI')
+bbvi = BBVI(logp_synth, gauss, adam, lmb = lmb_bbvi, n_init = n_init, n_samples = n_samples, init_inflation = init_inflation)
+bbvi_synth = bbvi.build(N)
+
+print('Synth ADVI')
+advi = BBVI(logp_synth, gauss, adam, lmb = lmb_advi, n_init = n_init, n_samples = n_samples, init_inflation = init_inflation)
+advi_synth = advi.build(1)
+
 f = open('results/logistic_synth_results.pk', 'wb')
 pk.dump([ubvi_synth, bbvi_synth, advi_synth], f)
 f.close()
-'''
 ################################## DS1 ########################################
 
 gauss = Gaussian(d_ds1, diag)
-lmb = lambda itr : 10./(1.+itr)
-lmb1 = lambda itr : 1.
-    
+lmb_bbvi = lambda itr : 10./(1.+itr)
+lmb_advi = lambda itr : 1.
+
 print('DS1 UBVI')
-ubvi = UBVI(logf_ds1, N, gauss, adam, n_samples, n_init, n_logfg_samples)
-ubvi_ds1 = ubvi.build()
+ubvi = UBVI(logp_ds1, gauss, adam, n_init = n_init, n_samples = n_samples, n_logfg_samples = n_logfg_samples, init_inflation = init_inflation)
+ubvi_ds1 = ubvi.build(N)
+
 print('DS1 BVI')
-bbvi = BBVI(logp_ds1, N, gauss, adam, n_samples, n_init, lmb)
-bbvi_ds1 = bbvi.build()
+bbvi = BBVI(logp_ds1, gauss, adam, lmb = lmb_bbvi, n_init = n_init, n_samples = n_samples, init_inflation = init_inflation)
+bbvi_ds1 = bbvi.build(N)
+
 print('DS1 ADVI')
-advi = BBVI(logp_ds1, 1, gauss, adam, n_samples, n_init, lmb1)
-advi_ds1 = advi.build()
+advi = BBVI(logp_ds1, gauss, adam, lmb = lmb_advi, n_init = n_init, n_samples = n_samples, init_inflation = init_inflation)
+advi_ds1 = advi.build(1)
    
-''' 
 f = open('results/logistic_ds1_results.pk', 'wb')
 pk.dump([ubvi_ds1, bbvi_ds1, advi_ds1], f)
 f.close()
-'''
 ################################# Phishing ####################################
 
 gauss = Gaussian(d_phish, diag)
-lmb = lambda itr : 10./(1.+itr)
-lmb1 = lambda itr : 1.
-  
-print('PHISH UBVI')
-ubvi = UBVI(logf_phish, N, gauss, adam, n_samples, n_init, n_logfg_samples)
-ubvi_phish = ubvi.build()
-print('PHISH BVI')
-bbvi = BBVI(logp_phish, N, gauss, adam, n_samples, n_init, lmb)
-bbvi_phish = bbvi.build()
-print('PHISH ADVI')
-advi = BBVI(logp_phish, 1, gauss, adam, n_samples, n_init, lmb1)
-advi_phish = advi.build()  
+lmb_bbvi = lambda itr : 10./(1.+itr)
+lmb_advi = lambda itr : 1.
 
-'''
+print('DS1 UBVI')
+ubvi = UBVI(logp_phish, gauss, adam, n_init = n_init, n_samples = n_samples, n_logfg_samples = n_logfg_samples, init_inflation = init_inflation)
+ubvi_phish = ubvi.build(N)
+
+print('DS1 BVI')
+bbvi = BBVI(logp_phish, gauss, adam, lmb = lmb_bbvi, n_init = n_init, n_samples = n_samples, init_inflation = init_inflation)
+bbvi_phish = bbvi.build(N)
+
+print('DS1 ADVI')
+advi = BBVI(logp_phish, gauss, adam, lmb = lmb_advi, n_init = n_init, n_samples = n_samples, init_inflation = init_inflation)
+advi_phish = advi.build(1)
+ 
 f = open('results/logistic_phish_results.pk', 'wb')
 pk.dump([ubvi_phish, bbvi_phish, advi_phish], f)
 f.close()
-'''
