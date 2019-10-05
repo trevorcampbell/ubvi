@@ -8,7 +8,7 @@ def simplex_sgd(x0, obj, grd, learning_rate, num_iters, callback = None):
         g = grd(x, i)
         #project gradient onto simplex
         g -= g.dot(np.ones(g.shape[0]))*np.ones(g.shape[0])/g.shape[0]
-        if callback and time.perf_counter() - t0 > 0.5: 
+        if callback and (i == 0 or i == num_iters - 1 or (time.perf_counter() - t0 > 0.5)): 
             callback(i, x, obj(x, i), g)
             t0 = time.perf_counter()
         #take the step

@@ -11,7 +11,7 @@ def adam(x0, obj, grd, learning_rate, num_iters, callback = None):
     t0 = time.perf_counter()
     for i in range(num_iters):
         g = grd(x, i)
-        if callback and time.perf_counter() - t0 > 0.5: 
+        if callback and (i == 0 or i == num_iters - 1 or (time.perf_counter() - t0 > 0.5)): 
             callback(i, x, obj(x, i), g)
             t0 = time.perf_counter()
         m = (1 - b1) * g + b1 * m  # First  moment estimate.
