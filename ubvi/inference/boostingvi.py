@@ -87,7 +87,7 @@ class BoostingVI(object):
             if self.verbose and (n == 0 or n == self.n_init - 1 or time.perf_counter() - t0 > 0.5):
                 if n == 0:
                     print("{:^30}|{:^30}|{:^30}".format('Iteration', 'Best x0', 'Best obj0'))
-                print("{:^30}|{:^30.3f}|{:^30.3f}".format(n, str(x0), str(obj0)))
+                print("{:^30}|{:^30}|{:^30.3f}".format(n, str(x0), obj0))
                 t0 = time.perf_counter()
         if x0 is None:
             #if every single initialization had an infinite objective, just raise an error
