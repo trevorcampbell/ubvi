@@ -20,10 +20,10 @@ class BBVI(BoostingVI):
         if self.params.shape[0] == 1:
             return 1
         else:
-            obj = lambda z: self._kl_estimate(self.params, z)
+            obj = lambda z, i: self._kl_estimate(self.params, z)
             grd = grad(obj)
             x = np.ones(self.params.shape[0])/float(self.params.shape[0])
-            return simplex_sgd(x, obj, grd, learning_rate=lambda itr : 0.1/(1+itr), num_iters=self.n_simplex_iters, callback = self.print_perf_w if self.verbose else None)
+            return simplex_sgd(x, obj, grd, learning_rate=lambda itr : 0.1/(1+itr), num_iters=self.n_simplex_iters, callback = self._print_perf_w if self.verbose else None)
 
     def _error(self):
         return "KL Divergence", self._kl_estimate(self.params, self.weights[-1])
@@ -52,12 +52,12 @@ class BBVI(BoostingVI):
             if len(lg.shape)==1:
                 lg = lg[:,np.newaxis]
             lg = logsumexp(lg+np.log(np.maximum(wts, 1e-64)), axis=1)
-            lf = self.target(samples)
+            lf = self.logp(samples)
             out += wts[k]*(lg.mean()-lf.mean())
         return out
     
-    def _print_perf_w(self, itr, x, obj, grd, print_every = 10):
-        if itr % 10*print_every == 0:
+    def _print_perf_w(self, itr, x, obj, grd, print_every = 100):
+        if itr % (10*print_every) == 0:
             print("{:^30}|{:^30}|{:^30}|{:^30}".format('Iteration', 'W', 'GradNorm', 'KL'))
         if itr % print_every == 0:
             print("{:^30}|{:^30}|{:^30.2f}|{:^30.2f}".format(itr, str(x), np.sqrt((grd**2).sum()), obj))

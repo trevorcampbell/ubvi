@@ -1,9 +1,9 @@
 import autograd.numpy as np
 
 def simplex_sgd(x0, obj, grd, learning_rate, num_iters, callback = None):
-    step_size = 0.1
+    x = x0.copy()
     for i in range(num_iters):
-        g = grd(x)
+        g = grd(x, i)
         #project gradient onto simplex
         g -= g.dot(np.ones(g.shape[0]))*np.ones(g.shape[0])/g.shape[0]
         if callback: callback(i, x, obj(x, i), g)

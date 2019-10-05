@@ -61,7 +61,7 @@ class UBVI(BoostingVI):
     def _objective(self, x, itr):
         allow_negative = False if itr < 0 else True
         
-        lgh = -np.inf if self.weights[-1].shape[0] == 0 else logsumexp(np.log(np.maximum(self.weights[-1], 1e-64)) + self.component_dist.log_sqrt_pair_integral(x, self.params))
+        lgh = -np.inf if len(self.weights) == 0 else logsumexp(np.log(np.maximum(self.weights[-1], 1e-64)) + self.component_dist.log_sqrt_pair_integral(x, self.params))
         h_samples = self.component_dist.sample(x, self.n_samples)
         lf = 0.5*self.logp(h_samples)
         lh = 0.5*self.component_dist.logpdf(x, h_samples) 
@@ -101,12 +101,12 @@ class UBVI(BoostingVI):
         pair_samples = np.random.multinomial(n, g_ps).reshape(self.Z.shape)
         #symmetrize (will just use lower triangular below for efficiency)
         pair_samples = pair_samples + pair_samples.T
-        for k in range(i):
+        for k in range(self.Z.shape[0]):
             pair_samples[k,k] /= 2
         #invert sigs
         #fill in samples
         cur_idx = 0
-        for j in range(i):
+        for j in range(self.Z.shape[0]):
             for m in range(j+1):
                 n_samps = pair_samples[j,m]
                 g_samples[cur_idx:cur_idx+n_samps, :] = self.component_dist.cross_sample(self.params[j, :], self.params[m, :], n_samps)

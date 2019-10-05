@@ -18,19 +18,17 @@ class BoostingVI(object):
         self.init_inflation = init_inflation #number of times to initialize each component
         self.verbose = verbose
         self.estimate_error = estimate_error
-        self.learning_rate = learning_rate
-        self.num_iters = num_iters
         
     def build(self, N):
 	#build the approximation up to N components
         for i in range(self.N, N):
-            t0 = time.process_time()
+            t0 = time.perf_counter()
 
             #initialize the next component
             if self.verbose: print("Initializing component " + str(i) +"... ")
             x0 = self._initialize()
             #if this is the first component, set the dimension of self.params
-            if a.size == 0:
+            if self.params.size == 0:
                 self.params = np.empty((0, x0.shape[0]))
             if self.verbose: print("Initialization of component " + str(i)+ " complete, x0 = " + str(x0))
             
@@ -49,7 +47,7 @@ class BoostingVI(object):
             if self.verbose: print('Weight update complete...')
 
             #compute the time taken for this step
-            self.cputs.append(time.process_time() - t0)
+            self.cputs.append(time.perf_counter() - t0)
 
             #estimate current error if desired
             if self.estimate_error:
@@ -71,7 +69,7 @@ class BoostingVI(object):
         #generate the nicely-formatted output params
         output = self.component_dist.unflatten(self.params)
         #add weights, instrumentation (e.g. cput)
-        output.update([('weights', self.weights), ('cput', self.cput)])
+        output.update([('weights', self.weights), ('cputs', self.cputs)])
 	
         return output
         

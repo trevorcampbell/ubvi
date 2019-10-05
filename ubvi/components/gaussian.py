@@ -107,8 +107,8 @@ class Gaussian(Component):
                 xtmp = np.hstack((mu0, L0.reshape(self.d*self.d)))
         return xtmp
     
-    def print_perf(self, itr, x, obj, grd, print_every = 10):
-        if itr % 10*print_every == 0:
+    def print_perf(self, itr, x, obj, grd, print_every = 100):
+        if itr % (10*print_every) == 0:
             print("{:^30}|{:^30}|{:^30}|{:^30}|{:^30}".format('Iteration', 'mu', 'Log(Sig)' if self.diag else 'Eigvals(Sig)', 'GradNorm', 'Boosting Obj'))
         if itr % print_every == 0:
             if self.diag:
