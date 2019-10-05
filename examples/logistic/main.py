@@ -44,11 +44,11 @@ def load_data(dnm, subset_sz=None):
 
 print('loading datasets')
 subset_sz = 20
-Z_synth, X_synth, Y_synth = load_data('./synth.npz', subset_sz)
+Z_synth, X_synth, Y_synth = load_data('../data/synth.npz', subset_sz)
 Y_synth[Y_synth == -1] = 0
-Z_ds1, X_ds1, Y_ds1 = load_data('./ds1.npz', subset_sz)
+Z_ds1, X_ds1, Y_ds1 = load_data('../data/ds1.npz', subset_sz)
 Y_ds1[Y_ds1 == -1] = 0
-Z_phish, X_phish, Y_phish = load_data('./phishing.npz', subset_sz)
+Z_phish, X_phish, Y_phish = load_data('../data/phishing.npz', subset_sz)
 Y_phish[Y_phish == -1] = 0
 
 #ensure we use the same Sig each time
