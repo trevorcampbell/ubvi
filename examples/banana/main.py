@@ -15,11 +15,11 @@ def logp(X):
 
 N_runs = 1
 N = 3
-d = 1
-diag = False
-n_samples = 500
-n_logfg_samples = 10000
-adam_learning_rate= lambda itr : 1./(itr+1)
+d = 2
+diag = True
+n_samples = 5000
+n_logfg_samples = 100000
+adam_learning_rate= lambda itr : 0.1/np.sqrt(itr+1)
 adam_num_iters = 5000
 n_init = 10000
 init_inflation = 100

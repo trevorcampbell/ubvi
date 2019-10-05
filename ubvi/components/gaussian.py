@@ -67,7 +67,7 @@ class Gaussian(Component):
         mu_new = new_param[:self.d]
         mus_old = old_params[:, :self.d]
         if self.diag:
-            lsig_new = params[self.d:]
+            lsig_new = new_param[self.d:]
             lsigs_old = old_params[:, self.d:]
             lSig2 = np.log(0.5)+np.logaddexp(lsig_new, lsig_old)
             return -0.125*np.sum(np.exp(-lSig2)*(mu_new - mus_old)**2, axis=1) - 0.5*np.sum(lSig2, axis=1) + 0.25*np.sum(lsig_new) + 0.25*np.sum(lsigs_old, axis=1)
