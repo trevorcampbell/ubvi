@@ -5,7 +5,7 @@ setup(
     url='https://github.com/trevorcampbell/ubvi',
     author='Trevor Campbell',
     author_email='trevor@stat.ubc.ca',
-    version='0.1',
+    version='0.2',
     packages=find_packages(),
     license='MIT License',
     long_description=open('README.md').read(),
