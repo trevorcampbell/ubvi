@@ -9,62 +9,51 @@ from ..optimization import simplex_sgd
 
 class BBVI(BoostingVI):
     
-    def __init__(self, logp, N, distribution, optimization, n_samples, n_init, lmb, n_simplex_iters = 3000):
-        super().__init__(logp, N, distribution, optimization)
+    def __init__(self, logp, lmb = lambda itr : 1, n_samples = 100, n_simplex_iters = 3000, **kw):
+        super().__init__(**kw)
+        self.logp = logp
         self.lmb = lmb
         self.n_samples = n_samples
-        self.n_init = n_init
-        self.init_inflation = 100
         self.n_simplex_iters = n_simplex_iters
     
-    
-    def _weights_update(self):
-        i = self.params.shape[0]
-        assert i > self.g_w.shape[0]
-        if i==1:
+    def _compute_weights(self):
+        if self.params.shape[0] == 1:
             return 1
         else:
             obj = lambda z: self._kl_estimate(self.params, z)
             grd = grad(obj)
-            x = np.ones(i)/float(i)
-            return simplex_sgd(x, grd, learning_rate=lambda itr : 0.1/(1+itr), num_iters=self.n_simplex_iters, callback=lambda x, itr, gradient: self.print_perf_w(x, itr, gradient, obj))
-    
-    
+            x = np.ones(self.params.shape[0])/float(self.params.shape[0])
+            return simplex_sgd(x, obj, grd, learning_rate=lambda itr : 0.1/(1+itr), num_iters=self.n_simplex_iters, x_to_str = lambda y : str(y), print_every = self.print_every)
+
     def _error(self):
-        print('New weights: ' + str(self.g_w))
-        i = self.params.shape[0]
-        assert self.g_w.shape[0] == i and i > 0
-        kl = self._kl_estimate(self.params, self.g_w)
-        print('New KL estimate: ' + str(kl))
-        
+        return "KL Divergence", self._kl_estimate(self.params, self.weights[-1])
     
     def _objective(self, x, itr):
-        assert self.g_w.shape[0] == self.params.shape[0]
-        h_samples = self.D.sample(x, self.n_samples)
-        #compute log densities
-        lf = self.target(h_samples).mean()
-        i = self.g_w.shape[0]
-        if i > 0:
-            lg = self.D.logpdf(self.params, h_samples)
-            if i==1:
-                lg = lg[:,np.newaxis]
-            lg = logsumexp(lg+np.log(np.maximum(self.g_w, 1e-64)), axis=1).mean()
+        h_samples = self.component_dist.sample(x, self.n_samples)
+        #compute log target density under samples
+        lf = self.logp(h_samples).mean()
+        #compute current log mixture density
+        if len(self.weights) > 0:
+            lg = self.component_dist.logpdf(self.params, h_samples)
+            if len(lg.shape) == 1:
+                #need to add a dimension so that each sample corresponds to a row in lg
+                lg = lg[:,np.newaxis] 
+            lg = logsumexp(lg+np.log(np.maximum(self.weights[-1], 1e-64)), axis=1).mean()
         else:
             lg = 0.
-        lh = self.D.logpdf(x, h_samples).mean()
-        return lg + self.lmb(i)*lh - lf
+        lh = self.component_dist.logpdf(x, h_samples).mean()
+        return lg + self.lmb(itr)*lh - lf
     
-    
-    def _kl_estimate(self, Params, W):
+    def _kl_estimate(self, prms, wts):
         out = 0.
-        for k in range(W.shape[0]):
-            samples = self.D.sample(Params[k], self.n_samples)
-            lg = self.D.logpdf(Params, samples)
+        for k in range(wts.shape[0]):
+            samples = self.component_dist.sample(prms[k, :], self.n_samples)
+            lg = self.component_dist.logpdf(prms, samples)
             if len(lg.shape)==1:
                 lg = lg[:,np.newaxis]
-            lg = logsumexp(lg+np.log(np.maximum(W, 1e-64)), axis=1)
+            lg = logsumexp(lg+np.log(np.maximum(wts, 1e-64)), axis=1)
             lf = self.target(samples)
-            out += W[k]*(lg.mean()-lf.mean())
+            out += wts[k]*(lg.mean()-lf.mean())
         return out
     
     def print_perf_w(self, x, itr, gradient, obj):

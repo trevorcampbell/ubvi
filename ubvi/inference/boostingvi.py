@@ -1,12 +1,12 @@
 import autograd.numpy as np
 from autograd import grad
 import time
+from ..optimization.adam import adam
 
 
 class BoostingVI(object):
     
-    def __init__(self, target, component_dist, opt_alg, n_init = 10, init_inflation = 100, estimate_error = True, verbose = True):
-        self.target = target #the target for the boosting algorithm (e.g. log density)
+    def __init__(self, component_dist, opt_alg = adam, num_iters = 1000, learning_rate = lambda itr : 1./np.sqrt(1.+itr), n_init = 10, init_inflation = 100, estimate_error = True, verbose = True, print_every=10):
         self.N = 0 #current num of components
         self.component_dist = component_dist #component distribution object
         self.opt_alg = opt_alg #optimization algorithm function
@@ -16,25 +16,30 @@ class BoostingVI(object):
         self.errors = [] #list of error estimates after each build step
         self.n_init = n_init #number of times to initialize each component
         self.init_inflation = init_inflation #number of times to initialize each component
+        self.verbose = verbose
+        self.estimate_error = estimate_error
+        self.print_every = print_every
+        self.learning_rate = learning_rate
+        self.num_iters = num_iters
         
     def build(self, N):
 	#build the approximation up to N components
         for i in range(self.N, N):
             t0 = time.process_time()
 
-            #build the objective function and obtain its gradient via autodiff
-            obj = lambda x, itr: self._objective(x, itr)
-            grd = grad(obj)
-
             #initialize the next component
-            if self.verbose: print("Initializing component " + str(n) +"... ")
-            x0 = self._initialize(obj)
-            if self.verbose: print("Initialization of component " + str(n)+ " complete, x0 = " + str(x0))
+            if self.verbose: print("Initializing component " + str(i) +"... ")
+            x0 = self._initialize()
+            #if this is the first component, set the dimension of self.params
+            if a.size == 0:
+                self.params = np.empty((0, x0.shape[0]))
+            if self.verbose: print("Initialization of component " + str(i)+ " complete, x0 = " + str(x0))
             
             #build the next component
-            if self.verbose: print("Optimizing component " + str(n) +"... ")
-            new_param = self.opt_alg(x0, obj, grd, callback=lambda prms, itr, grd : self.component_dist.print_perf(prms, itr, grd, self.print_every, obj))
-            if self.verbose: print("Optimization of component " + str(n) + " complete")
+            if self.verbose: print("Optimizing component " + str(i) +"... ")
+            grd = grad(self._objective)
+            new_param = self.opt_alg(x0, self._objective, grd, self.learning_rate, self.num_iters, x_to_str=lambda x : self.component_dist.print_params(x), print_every=self.print_every)
+            if self.verbose: print("Optimization of component " + str(i) + " complete")
 
             #add it to the matrix of flattened parameters
             self.params = np.vstack((self.params, new_param))
@@ -71,13 +76,13 @@ class BoostingVI(object):
 	
         return output
         
-    def _initialize(self, obj):
+    def _initialize(self):
         x0 = None
         obj0 = np.inf
         #try initializing n_init times
         for n in range(self.n_init):
             xtmp = self.component_dist.params_init(self.params, self.weights, self.init_inflation)
-            objtmp = obj(xtmp, -1)
+            objtmp = self._objective(xtmp, -1)
             if objtmp < obj0:
                 x0 = xtmp
                 obj0 = objtmp
@@ -87,12 +92,12 @@ class BoostingVI(object):
             raise ValueError
         #return the initialized result
         return x0
+
+    def _compute_weights(self):
+        raise NotImplementedError
         
     def _objective(self, itr):
         raise NotImplementedError
         
-    def _compute_weights(self):
-        raise NotImplementedError
-    
     def _error(self):
         raise NotImplementedError

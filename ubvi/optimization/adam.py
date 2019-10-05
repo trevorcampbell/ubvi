@@ -1,6 +1,6 @@
 import autograd.numpy as np
 
-def adam(x0, grd, learning_rate, num_iters, callback=None):
+def adam(x0, obj, grd, learning_rate, num_iters, x_to_str=None, print_every = None):
     b1=0.9
     b2=0.999
     eps=10**-8
