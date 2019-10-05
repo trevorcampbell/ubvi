@@ -1,12 +1,16 @@
 import autograd.numpy as np
+import time
 
 def simplex_sgd(x0, obj, grd, learning_rate, num_iters, callback = None):
     x = x0.copy()
+    t0 = time.perf_counter()
     for i in range(num_iters):
         g = grd(x, i)
         #project gradient onto simplex
         g -= g.dot(np.ones(g.shape[0]))*np.ones(g.shape[0])/g.shape[0]
-        if callback: callback(i, x, obj(x, i), g)
+        if callback and time.perf_counter() - t0 > 0.5: 
+            callback(i, x, obj(x, i), g)
+            t0 = time.perf_counter()
         #take the step
         x -= learning_rate(i)*g
         #account for numerical precision stuff

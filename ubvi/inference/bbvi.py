@@ -56,11 +56,10 @@ class BBVI(BoostingVI):
             out += wts[k]*(lg.mean()-lf.mean())
         return out
     
-    def _print_perf_w(self, itr, x, obj, grd, print_every = 100):
-        if itr % (10*print_every) == 0:
+    def _print_perf_w(self, itr, x, obj, grd):
+        if itr == 0:
             print("{:^30}|{:^30}|{:^30}|{:^30}".format('Iteration', 'W', 'GradNorm', 'KL'))
-        if itr % print_every == 0:
-            print("{:^30}|{:^30}|{:^30.2f}|{:^30.2f}".format(itr, str(x), np.sqrt((grd**2).sum()), obj))
+        print("{:^30}|{:^30}|{:^30.2f}|{:^30.2f}".format(itr, str(x), np.sqrt((grd**2).sum()), obj))
 
       
     
