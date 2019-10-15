@@ -66,7 +66,7 @@ def mixture_sample(mu, Sig, wt, n_samples):
     cts = np.random.multinomial(n_samples, wt)
     X = np.zeros((n_samples, mu.shape[1]))
     c = 0
-    for k in range(mu.shape[0]):
+    for k in range(wt.shape[0]):
         X[c:c+cts[k], :] = np.random.multivariate_normal(mu[k, :], Sig[k, :, :], cts[k])
         c += cts[k]
     return X
@@ -74,17 +74,22 @@ def mixture_sample(mu, Sig, wt, n_samples):
 def kl_estimate(mus, Sigs, wts, logp, p_sample, n_samples=10000, direction='forward'):
     if direction == 'forward':
         X = p_sample(n_samples)
+        if len(X.shape) == 1: 
+            X = X[:, np.newaxis]
         lp = logp(X)
 
     N = len(wts)
     kl = np.zeros(N)
     for i in range(N):
+        Ni = wts[i].shape[0]
         if direction == 'forward':
-            lq = mixture_logpdf(X, mus, Sigs, wts)
+            lq = mixture_logpdf(X, mus[:Ni], Sigs[:Ni], wts[i])
             kl[i] = (lp - lq).mean()
         else:
-            X = mixture_sample(mus, Sigs, wts[i], n_samples)
-            lq = mixture_logpdf(X, mus, Sigs, wts)
+            X = mixture_sample(mus[:Ni], Sigs[:Ni], wts[i], n_samples)
+            if len(X.shape) == 1: 
+                X = X[:, np.newaxis]
+            lq = mixture_logpdf(X, mus[:Ni], Sigs[:Ni], wts[i])
             lp = logp(X)
             kl[i] = (lq - lp).mean()
     return kl

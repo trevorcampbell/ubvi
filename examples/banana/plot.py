@@ -5,7 +5,7 @@ import bokeh.layouts as bkl
 
 import sys, os
 sys.path.insert(1, os.path.join(sys.path[0], '../'))
-from common import mixture_logpdf, preprocess_plot, postprocess_plot, pal, logFmtr
+from common import mixture_logpdf, preprocess_plot, postprocess_plot, pal, logFmtr, kl_estimate
 from ubvi.autograd import logsumexp
 
 def logp(X):
@@ -27,7 +27,7 @@ ubvis, bbvis, bbvi2s = pk.load(f)
 f.close()
 
 N_runs = len(ubvis)
-N = ubvis[0][0].shape[0]
+N = len(ubvis[0]['cputs'])
 
 fkl_ubvi = np.zeros((N_runs, N))
 rkl_ubvi = np.zeros((N_runs, N))
@@ -43,25 +43,22 @@ for i in range(len(ubvis)):
     Sigs = ubvis[i]['Sigs']
     wts = ubvis[i]['weights']
     cput_ubvi[i,:] = ubvis[i]['cputs']
-    fkl_ubvi[i,:] = kldiv(mus, Sigs, wts, logp, p_sample, direction='forward')
-    rkl_ubvi[i,:] = kldiv(mus, Sigs, wts, logp, p_sample, direction='reverse')
-    cput_ubvi[i,:] = cput
+    fkl_ubvi[i,:] = kl_estimate(mus, Sigs, wts, logp, p_sample, direction='forward')
+    rkl_ubvi[i,:] = kl_estimate(mus, Sigs, wts, logp, p_sample, direction='reverse')
     
     mus = bbvis[i]['mus']
     Sigs = bbvis[i]['Sigs']
     wts = bbvis[i]['weights']
     cput_bbvi[i,:] = bbvis[i]['cputs']
-    fkl_bbvi[i,:] = kldiv(mus, Sigs, wts, logp, p_sample, direction='forward')
-    rkl_bbvi[i,:] = kldiv(mus, Sigs, wts, logp, p_sample, direction='reverse')
-    cput_bbvi[i,:] = cput
+    fkl_bbvi[i,:] = kl_estimate(mus, Sigs, wts, logp, p_sample, direction='forward')
+    rkl_bbvi[i,:] = kl_estimate(mus, Sigs, wts, logp, p_sample, direction='reverse')
 
     mus = bbvi2s[i]['mus']
     Sigs = bbvi2s[i]['Sigs']
     wts = bbvi2s[i]['weights']
     cput_bbvi2[i,:] = bbvi2s[i]['cputs']
-    fkl_bbvi2[i,:] = kldiv(mus, Sigs, wts, logp, p_sample, direction='forward')
-    rkl_bbvi2[i,:] = kldiv(mus, Sigs, wts, logp, p_sample, direction='reverse')
-    cput_bbvi2[i,:] = cput
+    fkl_bbvi2[i,:] = kl_estimate(mus, Sigs, wts, logp, p_sample, direction='forward')
+    rkl_bbvi2[i,:] = kl_estimate(mus, Sigs, wts, logp, p_sample, direction='reverse')
 
 print('CPU Time per component:')
 print('UBVI: ' + str(cput_ubvi.mean()) + '+/-' + str(cput_ubvi.std()))
