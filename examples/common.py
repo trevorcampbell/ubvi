@@ -1,11 +1,34 @@
 import numpy as np
 from ubvi.autograd import logsumexp
 import bokeh.palettes as bkpl
+from bokeh.models import FuncTickFormatter
 
 pal = bkpl.colorblind['Colorblind'][8]
 pl = [pal[1], pal[0], pal[3]]
 pl.extend(pal[4:8])
 pal = pl
+
+logFmtr = FuncTickFormatter(code="""
+var trns = [
+'\u2070',
+'\u00B9',
+'\u00B2',
+'\u00B3',
+'\u2074',
+'\u2075',
+'\u2076',
+'\u2077',
+'\u2078',
+'\u2079']
+if (Math.log10(tick) < 0){
+  return '10\u207B'+trns[Math.round(Math.abs(Math.log10(tick)))];
+} else {
+  return '10'+trns[Math.round(Math.abs(Math.log10(tick)))];
+}
+""")
+
+
+
 
 def preprocess_plot(fig, axis_font_size, log_scale):
     fig.xaxis.axis_label_text_font_size= axis_font_size
@@ -36,5 +59,66 @@ def mixture_logpdf(X, mu, Sig, wt):
     lg = -0.5*inner_prods.sum(axis=3).sum(axis=2)
     lg -= 0.5*mu.shape[1]*np.log(2*np.pi) + 0.5*np.linalg.slogdet(Sig)[1] 
     return logsumexp(lg+np.log(wt), axis=1)
+
+def mixture_sample(mu, Sig, wt, n_samples):
+    if len(Sig.shape) < 3:
+        Sig = Sig[:, :, np.newaxis]
+    cts = np.random.multinomial(n_samples, wt)
+    X = np.zeros((n_samples, mu.shape[1]))
+    c = 0
+    for k in range(mu.shape[0]):
+        X[c:c+cts[k], :] = np.random.multivariate_normal(mu[k, :], Sig[k, :, :], cts[k])
+        c += cts[k]
+    return X
     
+def kl_estimate(mus, Sigs, wts, logp, p_sample, n_samples=10000, direction='forward'):
+    #cauchy
+    #X = np.random.standard_cauchy(n_samples)
+
+    #banana
+    #b = 0.1
+    #X = np.random.multivariate_normal(np.zeros(2), np.array([[100, 0], [0, 1]]), n_samples)
+    #X[:, 1] = X[:, 1] - b*X[:, 0]**2 + 100*b
+
+    if direction == 'forward':
+        X = p_sample(n_samples)
+        lp = logp(X)
+
+    N = len(wts)
+    kl = np.zeros(N)
+    for i in range(N):
+        if direction == 'forward':
+            lq = mixture_logpdf(X, mus, Sigs, wts)
+            kl[i] = (lp - lq).mean()
+        else:
+            X = mixture_sample(mus, Sigs, wts[i], n_samples)
+            lq = mixture_logpdf(X, mus, Sigs, wts)
+            lp = logp(X)
+            kl[i] = (lq - lp).mean()
+    return kl
+
+def kldiv_banana(Mu, Sigma, W, n_samples=10000, method="ubvi", direction="forward"):
+
+    
+
+    lp = banana(X)
+    Siginv = np.linalg.inv(Sigma)
+    K = Mu.shape[0]
+    kl = np.zeros(K)
+    for i in range(K):
+        if method=="ubvi":
+            lq_sqrt = 0.5*mvnlogpdf(X, Mu[:i+1], Sigma[:i+1], Siginv[:i+1])
+            lq = 2*logsumexp(lq_sqrt + np.log(W[i, :i+1]), axis=1)
+        if method=="bbvi":
+            lq= mvnlogpdf(X, Mu[:i+1], Sigma[:i+1], Siginv[:i+1])
+            lq = logsumexp(lq + np.log(W[i, :i+1]), axis=1)
+        if direction == "reverse":
+          wts = (lq - lp)
+          wts -= wts.max()
+          wts = np.exp(wts)/(np.exp(wts).sum())
+          kl[i] = (wts*(lq-lp)).sum()
+        else:
+          kl[i] = (lp - lq).mean()
+    return kl
+
 

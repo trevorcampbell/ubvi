@@ -68,50 +68,6 @@ def banana(X):
 def logf(x):
    return 0.5*banana(x)
 
-def kldiv(Mu, Sigma, W, n_samples=10000, method="ubvi", direction="forward"):
-
-    b = 0.1
-    X = np.random.multivariate_normal(np.zeros(2), np.array([[100, 0], [0, 1]]), n_samples)
-    X[:, 1] = X[:, 1] - b*X[:, 0]**2 + 100*b
-
-    ###plot X to check
-    ##x = np.linspace(-30, 30, 600)
-    ##y = np.linspace(-50, 20, 700)
-    ##xx, yy = np.meshgrid(x, y)
-    ##x = xx.reshape(-1,1)
-    ##y = yy.reshape(-1,1)
-    ##X_contour = np.hstack((x,y))
-    ###plot the truth
-    ##Y_contour = np.exp(banana(X_contour)).reshape(700,600)
-    ##Levels = np.array([0.001, 0.0025, 0.005, 0.01, 0.015, 0.025])
-    ##plt.contour(xx, yy, Y_contour, levels=Levels, colors='black') #cmap="Blues_r")
-    ##plt.scatter(X[:, 0], X[:, 1], color='blue')
-    ##plt.scatter(forward_kl.X[:, 0], forward_kl.X[:, 1], color='red')
-    ##plt.show()
-
-    lp = banana(X)
-    Siginv = np.linalg.inv(Sigma)
-    K = Mu.shape[0]
-    kl = np.zeros(K)
-    for i in range(K):
-        if method=="ubvi":
-            lq_sqrt = 0.5*mvnlogpdf(X, Mu[:i+1], Sigma[:i+1], Siginv[:i+1])
-            lq = 2*logsumexp(lq_sqrt + np.log(W[i, :i+1]), axis=1)
-        if method=="bbvi":
-            lq= mvnlogpdf(X, Mu[:i+1], Sigma[:i+1], Siginv[:i+1])
-            lq = logsumexp(lq + np.log(W[i, :i+1]), axis=1)
-        if direction == "reverse":
-          wts = (lq - lp)
-          wts -= wts.max()
-          wts = np.exp(wts)/(np.exp(wts).sum())
-          kl[i] = (wts*(lq-lp)).sum()
-        else:
-          kl[i] = (lp - lq).mean()
-    return kl
-
-    
-###############################################################################
-
 #load results
 f = open('results/banana.pk', 'rb')
 ubvis, bbvis, bbvi2s = pk.load(f)

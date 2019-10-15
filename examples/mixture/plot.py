@@ -8,6 +8,7 @@ sys.path.insert(1, os.path.join(sys.path[0], '../'))
 from common import mixture_logpdf, preprocess_plot, postprocess_plot, pal
 from ubvi.autograd import logsumexp
 
+
 #load the results
 f = open('results/mixture_results.pk', 'rb')
 res = pk.load(f)
