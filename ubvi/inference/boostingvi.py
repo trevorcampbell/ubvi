@@ -10,10 +10,10 @@ class BoostingVI(object):
         self.N = 0 #current num of components
         self.component_dist = component_dist #component distribution object
         self.opt_alg = opt_alg #optimization algorithm function
-        self.weights = [] #trace of weights
+        self.weights = np.empty(0) #weights
         self.params = np.empty((0, 0)) 
-        self.cputs = [] #list of computation times for each build step
-        self.errors = [] #list of error estimates after each build step
+        self.cput = 0. #total computation time so far
+        self.error = np.inf #error for the current mixture
         self.n_init = n_init #number of times to initialize each component
         self.init_inflation = init_inflation #number of times to initialize each component
         self.verbose = verbose
@@ -43,32 +43,32 @@ class BoostingVI(object):
 
             #compute the new weights and add to the list
             if self.verbose: print('Updating weights...')
-            self.weights.append(np.atleast_1d(self._compute_weights()))
+            self.weights = np.atleast_1d(self._compute_weights())
             if self.verbose: print('Weight update complete...')
 
             #compute the time taken for this step
-            self.cputs.append(time.perf_counter() - t0)
+            self.cput += time.perf_counter() - t0
 
             #estimate current error if desired
             if self.estimate_error:
-                err_name, err_val = self._error()
-                self.errors.append(err_val)
+                err_name, self.error = self._error()
 
             #print out the current error
             if self.verbose:
                 print('Component ' + str(self.params.shape[0]) +':')
-                print('CPU Time: ' + str(self.cputs[-1]))
+                print('Cumulative CPU Time: ' + str(self.cput))
                 if self.estimate_error:
-                    print(err_name +': ' + str(err_val))
+                    print(err_name +': ' + str(self.error))
                 print('Params:' + str(self.component_dist.unflatten(self.params)))
-                print('Weights: ' + str(self.weights[-1]))
+                print('Weights: ' + str(self.weights))
             
         #update self.N to the new # comps
         self.N = N
 
         #generate the nicely-formatted output params
         output = self._get_mixture()
-        output['cputs'] = self.cputs
+        output['cput'] = self.cput
+        output['obj'] = self.error
         return output
         
         

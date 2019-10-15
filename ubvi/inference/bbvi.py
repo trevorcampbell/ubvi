@@ -26,23 +26,24 @@ class BBVI(BoostingVI):
             try:
                 new_wts = simplex_sgd(x, obj, grd, learning_rate=lambda itr : 0.1/(1+itr), num_iters=self.n_simplex_iters, callback = self._print_perf_w if self.verbose else None)
             except: #if there's a divergence in simplex sgd, reject the new component
-                new_wts = np.hstack((self.weights[-1], 0.))
+                new_wts = np.hstack((self.weights, 0.))
             return new_wts
 
     def _error(self):
-        return "KL Divergence", self._kl_estimate(self.params, self.weights[-1])
+        return "KL Divergence", self._kl_estimate(self.params, self.weights)
     
     def _objective(self, x, itr):
         h_samples = self.component_dist.sample(x, self.n_samples)
         #compute log target density under samples
         lf = self.logp(h_samples).mean()
         #compute current log mixture density
-        if len(self.weights) > 0:
+        if self.weights.size > 0:
             lg = self.component_dist.logpdf(self.params, h_samples)
             if len(lg.shape) == 1:
                 #need to add a dimension so that each sample corresponds to a row in lg
                 lg = lg[:,np.newaxis] 
-            lg = logsumexp(lg+np.log(np.maximum(self.weights[-1], 1e-64)), axis=1).mean()
+            #lg = logsumexp(lg+np.log(np.maximum(self.weights[-1], 1e-64)), axis=1).mean()
+            lg = logsumexp(lg[:, self.weights > 0]+np.log(self.weights[self.weights>0]), axis=1).mean()
         else:
             lg = 0.
         lh = self.component_dist.logpdf(x, h_samples).mean()
@@ -55,7 +56,8 @@ class BBVI(BoostingVI):
             lg = self.component_dist.logpdf(prms, samples)
             if len(lg.shape)==1:
                 lg = lg[:,np.newaxis]
-            lg = logsumexp(lg+np.log(np.maximum(wts, 1e-64)), axis=1)
+            #lg = logsumexp(lg+np.log(np.maximum(wts, 1e-64)), axis=1)
+            lg = logsumexp(lg[:,wts>0]+np.log(wts[wts>0]), axis=1)
             lf = self.logp(samples)
             out += wts[k]*(lg.mean()-lf.mean())
         return out

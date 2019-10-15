@@ -27,10 +27,9 @@ for i in range(len(bbvis)):
   mus = bbvis[i]['mus']
   Sigs = bbvis[i]['Sigs']
   weights = bbvis[i]['weights']
-  cputs = bbvis[i]['cputs']
   lmb = bbvi_lmbs[i]
   #compute log density for KL boosting VI
-  lg = mixture_logpdf(X[:, np.newaxis], mus, Sigs, weights[-1])
+  lg = mixture_logpdf(X[:, np.newaxis], mus, Sigs, weights)
   #plot
   fig.line(X, np.exp(0.5*lg), line_width=6.5, color=pal[i+1], legend='BVI'+str(lmb), line_dash='dashed')
 
@@ -43,8 +42,7 @@ fig.line(X, np.exp(0.5*lg), line_width=6.5, line_color='black', legend='p(x)', l
 mus = ubvi['mus']
 Sigs = ubvi['Sigs']
 weights = ubvi['weights']
-cputs = ubvi['cputs']
-lg = mixture_logpdf(X[:, np.newaxis], mus, Sigs, weights[-1])
+lg = mixture_logpdf(X[:, np.newaxis], mus, Sigs, weights)
 fig.line(X, np.exp(0.5*lg), line_width=6.5, color=pal[0], legend='UBVI', line_dash = [20, 20])
 
 postprocess_plot(fig, '24pt')

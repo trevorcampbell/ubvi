@@ -46,11 +46,11 @@ lmb = lambda itr : 10.
 bbvi2 = BBVI(logp, gauss, adam, lmb = lmb, n_init = n_init, n_samples = n_samples, init_inflation = init_inflation)
 mixture_bbvi2 = bbvi2.build(N)
 
+
 #BBVI 30
 lmb = lambda itr : 30.
 bbvi3 = BBVI(logp, gauss, adam, lmb = lmb, n_init = n_init, n_samples = n_samples, init_inflation = init_inflation)
 mixture_bbvi3 = bbvi3.build(N)
-
 
 if not os.path.exists('results/'):
     os.mkdir('results')

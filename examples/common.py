@@ -30,14 +30,15 @@ if (Math.log10(tick) < 0){
 
 
 
-def preprocess_plot(fig, axis_font_size, log_scale):
+def preprocess_plot(fig, axis_font_size, log_scale_x = False, log_scale_y = False):
     fig.xaxis.axis_label_text_font_size= axis_font_size
     fig.xaxis.major_label_text_font_size= axis_font_size
     fig.yaxis.axis_label_text_font_size= axis_font_size
     fig.yaxis.major_label_text_font_size= axis_font_size
-    if log_scale:
-      fig.yaxis.formatter = logFmtr
+    if log_scale_x:
       fig.xaxis.formatter = logFmtr
+    if log_scale_y:
+      fig.yaxis.formatter = logFmtr
     #fig.toolbar.logo = None
     #fig.toolbar_location = None
 
@@ -58,7 +59,7 @@ def mixture_logpdf(X, mu, Sig, wt):
     inner_prods = (X[:,np.newaxis,:]-mu)[:,:,:,np.newaxis] * Siginv *  (X[:,np.newaxis,:]-mu)[:,:,np.newaxis,:]
     lg = -0.5*inner_prods.sum(axis=3).sum(axis=2)
     lg -= 0.5*mu.shape[1]*np.log(2*np.pi) + 0.5*np.linalg.slogdet(Sig)[1] 
-    return logsumexp(lg+np.log(wt), axis=1)
+    return logsumexp(lg[:, wt>0]+np.log(wt[wt>0]), axis=1)
 
 def mixture_sample(mu, Sig, wt, n_samples):
     if len(Sig.shape) < 3:
@@ -71,27 +72,13 @@ def mixture_sample(mu, Sig, wt, n_samples):
         c += cts[k]
     return X
     
-def kl_estimate(mus, Sigs, wts, logp, p_sample, n_samples=10000, direction='forward'):
+def kl_estimate(mus, Sigs, wts, logp, p_samps, direction='forward'):
+    lp = logp(p_samps)
     if direction == 'forward':
-        X = p_sample(n_samples)
-        if len(X.shape) == 1: 
-            X = X[:, np.newaxis]
-        lp = logp(X)
-
-    N = len(wts)
-    kl = np.zeros(N)
-    for i in range(N):
-        Ni = wts[i].shape[0]
-        if direction == 'forward':
-            lq = mixture_logpdf(X, mus[:Ni], Sigs[:Ni], wts[i])
-            kl[i] = (lp - lq).mean()
-        else:
-            X = mixture_sample(mus[:Ni], Sigs[:Ni], wts[i], n_samples)
-            if len(X.shape) == 1: 
-                X = X[:, np.newaxis]
-            lq = mixture_logpdf(X, mus[:Ni], Sigs[:Ni], wts[i])
-            lp = logp(X)
-            kl[i] = (lq - lp).mean()
+        lq = mixture_logpdf(p_samps, mus, Sigs, wts)
+        kl = (lp - lq).mean()
+    else:
+        lq = mixture_logpdf(p_samps, mus, Sigs, wts)
+        ratio_max = (lq - lp).max()
+        kl = np.exp(ratio_max)*((lq - lp)*np.exp( (lq-lp) - ratio_max)).mean()
     return kl
-
-

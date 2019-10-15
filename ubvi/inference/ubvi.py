@@ -34,7 +34,7 @@ class UBVI(BoostingVI):
         
         #compute optimal weights via nnls
         if self.params.shape[0] == 1:
-            w = 1
+            w = np.array([1])
         else:
             Linv = np.linalg.inv(np.linalg.cholesky(self.Z))
             d = np.exp(self._logfg-self._logfg.max()) #the opt is invariant to d scale, so normalize to have max 1
@@ -43,7 +43,8 @@ class UBVI(BoostingVI):
             w = np.maximum(0., np.dot(Linv.T, lbd/np.sqrt(((lbd**2).sum()))))
 
         #compute weighted logfg sum
-        self._logfgsum = logsumexp(np.hstack((-np.inf, self._logfg + np.log(np.maximum(w, 1e-64)))))
+        #self._logfgsum = logsumexp(np.hstack((-np.inf, self._logfg + np.log(np.maximum(w, 1e-64)))))
+        self._logfgsum = logsumexp(np.hstack((-np.inf, self._logfg[w>0] + np.log(w[w>0]))))
        
         #return the weights
         return w
@@ -61,7 +62,8 @@ class UBVI(BoostingVI):
     def _objective(self, x, itr):
         allow_negative = False if itr < 0 else True
         
-        lgh = -np.inf if len(self.weights) == 0 else logsumexp(np.log(np.maximum(self.weights[-1], 1e-64)) + self.component_dist.log_sqrt_pair_integral(x, self.params))
+        #lgh = -np.inf if len(self.weights) == 0 else logsumexp(np.log(np.maximum(self.weights[-1], 1e-64)) + self.component_dist.log_sqrt_pair_integral(x, self.params))
+        lgh = -np.inf if self.weights.size == 0 else logsumexp(np.log(self.weights[self.weights>0]) + np.atleast_2d(self.component_dist.log_sqrt_pair_integral(x, self.params))[:, self.weights>0])
         h_samples = self.component_dist.sample(x, self.n_samples)
         lf = 0.5*self.logp(h_samples)
         lh = 0.5*self.component_dist.logpdf(x, h_samples) 
@@ -90,13 +92,14 @@ class UBVI(BoostingVI):
         logg_x = 0.5 * self.component_dist.logpdf(self.params, samples)
         if len(logg_x.shape) == 1:
             logg_x = logg_x[:,np.newaxis]
-        return logsumexp(logg_x + np.log(np.maximum(self.weights[-1], 1e-64)), axis=1)
+        #return logsumexp(logg_x + np.log(np.maximum(self.weights[-1], 1e-64)), axis=1)
+        return logsumexp(logg_x[:, self.weights>0] + np.log(self.weights[self.weights > 0]), axis=1)
         
     def _sample_g(self, n):
         #samples from g^2
         g_samples = np.zeros((n, self.component_dist.d))
         #compute # samples in each mixture pair
-        g_ps = (self.weights[-1][:, np.newaxis]*self.Z*self.weights[-1]).flatten()
+        g_ps = (self.weights[:, np.newaxis]*self.Z*self.weights).flatten()
         g_ps /= g_ps.sum()
         pair_samples = np.random.multinomial(n, g_ps).reshape(self.Z.shape)
         #symmetrize (will just use lower triangular below for efficiency)
@@ -115,14 +118,12 @@ class UBVI(BoostingVI):
 
     def _get_mixture(self):
         #get the mixture weights
-        ps = []
-        for i in range(len(self.weights)):
-            ps.append( (self.weights[i][:, np.newaxis]*self.Z[:i+1,:i+1]*self.weights[i]).flatten() )
-            ps[-1] /= ps[-1].sum()
+        ps = (self.weights[:, np.newaxis]*self.Z*self.weights).flatten() 
+        ps /= ps.sum()
         paired_params = np.zeros((self.params.shape[0]**2, self.params.shape[1]))
         for i in range(self.N): 
             for j in range(self.N): 
-                paired_params[i*self.N + j, :] = self.component_dist._get_paired_param(self.params[i], self.params[j], flatten=True)
+                paired_params[i*self.N + j, :] = self.component_dist._get_paired_param(self.params[i, :], self.params[j, :], flatten=True)
         #get the unflattened params and weights
         output = self.component_dist.unflatten(paired_params)
         output.update([('weights', ps)])

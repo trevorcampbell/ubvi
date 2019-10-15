@@ -102,7 +102,7 @@ class Gaussian(Component):
                 xtmp = np.hstack((mu0, L0.reshape(self.d*self.d)))
         else:
             mu = params[:, :self.d]
-            k = np.random.choice(np.arange(i), p=(weights[-1]**2)/(weights[-1]**2).sum())
+            k = np.random.choice(np.arange(i), p=(weights**2)/(weights**2).sum())
             if self.diag:
                 lsig = params[:, self.d:]
                 mu0 = mu[k,:] + np.random.randn(self.d)*np.sqrt(inflation)*np.exp(lsig[k,:])
