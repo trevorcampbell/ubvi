@@ -112,3 +112,18 @@ class UBVI(BoostingVI):
                 g_samples[cur_idx:cur_idx+n_samps, :] = self.component_dist.cross_sample(self.params[j, :], self.params[m, :], n_samps)
                 cur_idx += n_samps
         return g_samples
+
+    def _get_mixture(self):
+        #get the mixture weights
+        ps = []
+        for i in range(len(self.weights)):
+            ps.append( (self.weights[i][:, np.newaxis]*self.Z[:i+1,:i+1]*self.weights[i]).flatten() )
+            ps[-1] /= ps[-1].sum()
+        paired_params = np.zeros((self.params.shape[0]**2, self.params.shape[1]))
+        for i in range(self.N): 
+            for j in range(self.N): 
+                paired_params[i*self.N + j, :] = self.component_dist._get_paired_param(self.params[i], self.params[j], flatten=True)
+        #get the unflattened params and weights
+        output = self.component_dist.unflatten(paired_params)
+        output.update([('weights', ps)])
+        return output

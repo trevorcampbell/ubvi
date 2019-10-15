@@ -23,7 +23,11 @@ class BBVI(BoostingVI):
             obj = lambda z, i: self._kl_estimate(self.params, z)
             grd = grad(obj)
             x = np.ones(self.params.shape[0])/float(self.params.shape[0])
-            return simplex_sgd(x, obj, grd, learning_rate=lambda itr : 0.1/(1+itr), num_iters=self.n_simplex_iters, callback = self._print_perf_w if self.verbose else None)
+            try:
+                new_wts = simplex_sgd(x, obj, grd, learning_rate=lambda itr : 0.1/(1+itr), num_iters=self.n_simplex_iters, callback = self._print_perf_w if self.verbose else None)
+            except: #if there's a divergence in simplex sgd, reject the new component
+                new_wts = np.hstack((self.weights[-1], 0.))
+            return new_wts
 
     def _error(self):
         return "KL Divergence", self._kl_estimate(self.params, self.weights[-1])
@@ -60,6 +64,12 @@ class BBVI(BoostingVI):
         if itr == 0:
             print("{:^30}|{:^30}|{:^30}|{:^30}".format('Iteration', 'W', 'GradNorm', 'KL'))
         print("{:^30}|{:^30}|{:^30.3f}|{:^30.3f}".format(itr, str(x), np.sqrt((grd**2).sum()), obj))
+
+    def _get_mixture(self):
+        #just get the unflattened params and weights; for KL BVI these correspond to mixture components
+        output = self.component_dist.unflatten(self.params)
+        output.update([('weights', self.weights)])
+        return output
 
       
     

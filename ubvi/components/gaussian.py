@@ -6,7 +6,7 @@ class Gaussian(Component):
     def __init__(self, d, diag): #d is dimension of the space, diag is whether to use diagonal covariance or full
         self.d = d 
         self.diag = diag
-        
+
     def unflatten(self, params):
         params = np.atleast_2d(params)
         N = params.shape[0]
@@ -47,19 +47,28 @@ class Gaussian(Component):
         else:
             L = param[self.d:].reshape((self.d, self.d))
             return mu + np.dot(std_samples, L)
-    
-    def cross_sample(self, param1, param2, n_samps):
+
+    def _get_paired_param(self, param1, param2, flatten=False):
         theta = self.unflatten(np.vstack((param1, param2)))
         mu = theta['mus']
         Sig = theta['Sigs']
         if self.diag:
             Sigp = 2./ (1/Sig[0, :] + 1/Sig[1, :])
             mup = 0.5*Sigp*(mu[0, :]/Sig[0, :] + mu[1, :]/Sig[1, :])
-            return mup + np.sqrt(Sigp)*np.random.randn(n_samps, self.d)
         else:
             Siginv = theta['Siginvs']
             Sigp = 2.0*np.linalg.inv(Siginv[0, :, :]+Siginv[1, :, :])
             mup = 0.5*np.dot(Sigp, np.dot(Siginv[0,:,:], mu[0,:]) + np.dot(Siginv[1,:,:], mu[1,:]))
+        if not flatten:
+            return mup, Sigp
+        else: 
+            return np.hstack((mup, np.log(Sigp) if self.diag else np.linalg.cholesky(Sigp).flatten()))
+    
+    def cross_sample(self, param1, param2, n_samps):
+        mup, Sigp = self._get_paired_param(param1, param2)
+        if self.diag:
+            return mup + np.sqrt(Sigp)*np.random.randn(n_samps, self.d)
+        else:
             return np.random.multivariate_normal(mup, Sigp, n_samps)
 
     def log_sqrt_pair_integral(self, new_param, old_params):

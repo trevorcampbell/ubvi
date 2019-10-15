@@ -67,11 +67,10 @@ class BoostingVI(object):
         self.N = N
 
         #generate the nicely-formatted output params
-        output = self.component_dist.unflatten(self.params)
-        #add weights, instrumentation (e.g. cput)
-        output.update([('weights', self.weights), ('cputs', self.cputs)])
-	
+        output = self._get_mixture()
+        output['cputs'] = self.cputs
         return output
+        
         
     def _initialize(self):
         x0 = None
@@ -102,4 +101,7 @@ class BoostingVI(object):
         raise NotImplementedError
         
     def _error(self):
+        raise NotImplementedError
+  
+    def _get_mixture(self):
         raise NotImplementedError
