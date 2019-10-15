@@ -72,14 +72,6 @@ def mixture_sample(mu, Sig, wt, n_samples):
     return X
     
 def kl_estimate(mus, Sigs, wts, logp, p_sample, n_samples=10000, direction='forward'):
-    #cauchy
-    #X = np.random.standard_cauchy(n_samples)
-
-    #banana
-    #b = 0.1
-    #X = np.random.multivariate_normal(np.zeros(2), np.array([[100, 0], [0, 1]]), n_samples)
-    #X[:, 1] = X[:, 1] - b*X[:, 0]**2 + 100*b
-
     if direction == 'forward':
         X = p_sample(n_samples)
         lp = logp(X)
@@ -95,30 +87,6 @@ def kl_estimate(mus, Sigs, wts, logp, p_sample, n_samples=10000, direction='forw
             lq = mixture_logpdf(X, mus, Sigs, wts)
             lp = logp(X)
             kl[i] = (lq - lp).mean()
-    return kl
-
-def kldiv_banana(Mu, Sigma, W, n_samples=10000, method="ubvi", direction="forward"):
-
-    
-
-    lp = banana(X)
-    Siginv = np.linalg.inv(Sigma)
-    K = Mu.shape[0]
-    kl = np.zeros(K)
-    for i in range(K):
-        if method=="ubvi":
-            lq_sqrt = 0.5*mvnlogpdf(X, Mu[:i+1], Sigma[:i+1], Siginv[:i+1])
-            lq = 2*logsumexp(lq_sqrt + np.log(W[i, :i+1]), axis=1)
-        if method=="bbvi":
-            lq= mvnlogpdf(X, Mu[:i+1], Sigma[:i+1], Siginv[:i+1])
-            lq = logsumexp(lq + np.log(W[i, :i+1]), axis=1)
-        if direction == "reverse":
-          wts = (lq - lp)
-          wts -= wts.max()
-          wts = np.exp(wts)/(np.exp(wts).sum())
-          kl[i] = (wts*(lq-lp)).sum()
-        else:
-          kl[i] = (lp - lq).mean()
     return kl
 
 

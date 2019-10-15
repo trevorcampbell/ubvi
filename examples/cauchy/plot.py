@@ -1,4 +1,3 @@
-from bbvi import mvnlogpdf
 import autograd.numpy as np
 import pickle as pk
 import bokeh.plotting as bkp
