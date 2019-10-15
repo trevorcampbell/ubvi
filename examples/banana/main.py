@@ -13,8 +13,8 @@ def logp(X):
     y = X[:,1]
     return -x**2/200 - (y+b*x**2-100*b)**2/2 - np.log(2*np.pi*10)
 
-N_runs = 1
-N = 3
+N_runs = 5
+N = 30
 d = 2
 diag = True
 n_samples = 5000
