@@ -40,7 +40,7 @@ def load_data(dnm, subset_sz=None):
         subset_sz = Z.shape[0]
     return Z[:subset_sz, :], X[:subset_sz, :-1], Y[:subset_sz]
 
-
+np.random.seed(1)
 
 print('loading datasets')
 subset_sz = 20

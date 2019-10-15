@@ -47,7 +47,8 @@ class BBVI(BoostingVI):
         else:
             lg = 0.
         lh = self.component_dist.logpdf(x, h_samples).mean()
-        return lg + self.lmb(self.params.shape[0])*lh - lf
+        #objective function is just ELBO on iteration 1, and then boosting objective on subsequent iterations
+        return lg + (self.lmb(self.weights.shape[0]) if self.weights.shape[0] > 0 else 1.)*lh - lf
     
     def _kl_estimate(self, prms, wts):
         out = 0.

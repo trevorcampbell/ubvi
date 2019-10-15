@@ -13,6 +13,8 @@ def logp(X):
     y = X[:,1]
     return -x**2/200 - (y+b*x**2-100*b)**2/2 - np.log(2*np.pi*10)
 
+np.random.seed(1)
+
 N_runs = 1000
 N = 30
 d = 2
