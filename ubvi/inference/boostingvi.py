@@ -93,7 +93,7 @@ class BoostingVI(object):
         for n in range(self.n_init):
             xtmp = self.component_dist.params_init(self.params, self.weights, self.init_inflation)
             objtmp = self._objective(xtmp, -1)
-            if objtmp < obj0:
+            if objtmp < obj0 or x0 is None:
                 x0 = xtmp
                 obj0 = objtmp
             if self.verbose and (n == 0 or n == self.n_init - 1 or time.perf_counter() - t0 > 0.5):
