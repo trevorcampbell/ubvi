@@ -4,6 +4,7 @@ import time
 def simplex_sgd(x0, obj, grd, learning_rate, num_iters, callback = None):
     x = x0.copy()
     t0 = time.perf_counter()
+    boundary_itr_threshold = num_iters / 10
     for i in range(num_iters):
         g = grd(x, i)
         #project gradient onto simplex
@@ -11,6 +12,9 @@ def simplex_sgd(x0, obj, grd, learning_rate, num_iters, callback = None):
         if callback and (i == 0 or i == num_iters - 1 or (time.perf_counter() - t0 > 0.5)): 
             callback(i, x, obj(x, i), g)
             t0 = time.perf_counter()
+        # if x is at a vertex and we've done at least 10% of the iterations, return early
+        if np.any(x == 1.) and i > boundary_itr_threshold:
+            return x
         #take the step
         x -= learning_rate(i)*g
         #account for numerical precision stuff

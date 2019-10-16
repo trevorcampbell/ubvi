@@ -35,11 +35,11 @@ if not os.path.exists('results/'):
 for i in range(N_runs):
     print('Run ' + str(i+1)+'/'+str(N_runs))
 
-    #UBVI
-    ubvi = UBVI(logp, gauss, adam, n_init = n_init, n_samples = n_samples, n_logfg_samples = n_logfg_samples, init_inflation = init_inflation)
-    ubvi_results = []
-    for n in range(1,N+1):
-        ubvi_results.append(ubvi.build(n))
+    ##UBVI
+    #ubvi = UBVI(logp, gauss, adam, n_init = n_init, n_samples = n_samples, n_logfg_samples = n_logfg_samples, init_inflation = init_inflation)
+    #ubvi_results = []
+    #for n in range(1,N+1):
+    #    ubvi_results.append(ubvi.build(n))
 
     #BBVI Good
     bbvi_good = BBVI(logp, gauss, adam, lmb = lmb_good, n_init = n_init, n_samples = n_samples, init_inflation = init_inflation)
