@@ -23,6 +23,7 @@ class BoostingVI(object):
 	#build the approximation up to N components
         for i in range(self.N, N):
             t0 = time.perf_counter()
+            error_flag = False
 
             #initialize the next component
             if self.verbose: print("Initializing component " + str(i+1) +"... ")
@@ -40,7 +41,8 @@ class BoostingVI(object):
                 new_param = self.opt_alg(x0, self._objective, grd)
                 if not np.all(np.isfinite(new_param)):
                     raise
-            except: #bbvi can run into bad degeneracies; if so, just revert to initialization
+            except: #bbvi can run into bad degeneracies; if so, just revert to initialization and set weight to 0
+                error_flag = True
                 new_param = x0
             if self.verbose: print("Optimization of component " + str(i+1) + " complete")
 
@@ -52,7 +54,7 @@ class BoostingVI(object):
             self.weights_prev = self.weights.copy()
             try:
                 self.weights = np.atleast_1d(self._compute_weights())
-                if not np.all(np.isfinite(self.weights)):
+                if not np.all(np.isfinite(self.weights)) or error_flag:
                     raise
             except: #bbvi can run into bad degeneracies; if so, just throw out the new component
                 self.weights = np.hstack((self.weights_prev, 0.))
