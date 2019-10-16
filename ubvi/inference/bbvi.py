@@ -23,11 +23,7 @@ class BBVI(BoostingVI):
             obj = lambda z, i: self._kl_estimate(self.params, z)
             grd = grad(obj)
             x = np.ones(self.params.shape[0])/float(self.params.shape[0])
-            try:
-                new_wts = simplex_sgd(x, obj, grd, learning_rate=lambda itr : 0.1/(1+itr), num_iters=self.n_simplex_iters, callback = self._print_perf_w if self.verbose else None)
-            except: #if there's a divergence in simplex sgd, reject the new component
-                new_wts = np.hstack((self.weights, 0.))
-            return new_wts
+            return simplex_sgd(x, obj, grd, learning_rate=lambda itr : 0.1/(1+itr), num_iters=self.n_simplex_iters, callback = self._print_perf_w if self.verbose else None)
 
     def _error(self):
         return "KL Divergence", self._kl_estimate(self.params, self.weights)

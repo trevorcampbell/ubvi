@@ -12,11 +12,11 @@ def logp(x):
 
 np.random.seed(1)
 
-N_runs = 20
+N_runs = 1000
 N = 30
 d = 1
 diag = True
-n_samples = 500
+n_samples = 1000
 n_logfg_samples = 10000
 adam_learning_rate= lambda itr : 10./np.sqrt(itr+1)
 adam_num_iters = 10000

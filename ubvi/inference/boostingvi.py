@@ -27,6 +27,7 @@ class BoostingVI(object):
             #initialize the next component
             if self.verbose: print("Initializing component " + str(i+1) +"... ")
             x0 = self._initialize()
+
             #if this is the first component, set the dimension of self.params
             if self.params.size == 0:
                 self.params = np.empty((0, x0.shape[0]))
@@ -35,7 +36,10 @@ class BoostingVI(object):
             #build the next component
             if self.verbose: print("Optimizing component " + str(i+1) +"... ")
             grd = grad(self._objective)
-            new_param = self.opt_alg(x0, self._objective, grd)
+            try:
+                new_param = self.opt_alg(x0, self._objective, grd)
+            except: #bbvi can run into bad degeneracies; if so, just revert to initialization
+                new_param = x0
             if self.verbose: print("Optimization of component " + str(i+1) + " complete")
 
             #add it to the matrix of flattened parameters
@@ -43,7 +47,12 @@ class BoostingVI(object):
 
             #compute the new weights and add to the list
             if self.verbose: print('Updating weights...')
-            self.weights = np.atleast_1d(self._compute_weights())
+            self.weights_prev = self.weights.copy()
+            try:
+                self.weights = np.atleast_1d(self._compute_weights())
+            except: #bbvi can run into bad degeneracies; if so, just throw out the new component
+                self.weights = np.hstack((self.weights_prev, 0.))
+
             if self.verbose: print('Weight update complete...')
 
             #compute the time taken for this step
