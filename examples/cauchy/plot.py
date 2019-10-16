@@ -46,7 +46,7 @@ print('UBVI: ' + str(np.diff(cput_ubvi, axis=1).mean()) + '+/-' + str(np.diff(cp
 print('BVI-Good: ' + str(np.diff(cput_bbvi, axis=1).mean()) + '+/-' + str(np.diff(cput_bbvi, axis=1).std()))
 print('BVI-Bad: ' + str(np.diff(cput_bbvi2, axis=1).mean()) + '+/-' + str(np.diff(cput_bbvi2, axis=1).std()))
 
-plot_idx = 3
+plot_idx = 0
 plot_N = 29
 u_mu = ubvis[plot_idx][plot_N]['mus']
 u_Sig = ubvis[plot_idx][plot_N]['Sigs']

@@ -56,7 +56,6 @@ class BoostingVI(object):
                 self.weights = np.atleast_1d(self._compute_weights())
                 if not np.all(np.isfinite(self.weights)) or error_flag:
                     raise
-                print('FOUND A WORKING INSTANCE')
             except: #bbvi can run into bad degeneracies; if so, just throw out the new component
                 self.weights = np.hstack((self.weights_prev, 0.))
 
