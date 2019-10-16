@@ -1,4 +1,4 @@
-import autograd.numpy as np
+import numpy as np
 import pickle as pk
 import bokeh.plotting as bkp
 import bokeh.layouts as bkl
@@ -7,10 +7,11 @@ from scipy.stats import cauchy as sp_cauchy
 import sys, os
 sys.path.insert(1, os.path.join(sys.path[0], '../'))
 from common import mixture_logpdf, preprocess_plot, postprocess_plot, pal, logFmtr, kl_estimate, mixture_sample
-from ubvi.autograd import logsumexp
 
 def logp(x):
     return (- np.log(1 + x**2) - np.log(np.pi)).flatten()
+
+p_samps = np.random.standard_cauchy(100000)[:,np.newaxis]
 
 #load results
 f = open('results/cauchy.pk', 'rb')
@@ -19,16 +20,12 @@ f.close()
 
 N_runs = len(ubvis)
 N = len(ubvis[0])
-p_samps = np.random.standard_cauchy(1000000)[:,np.newaxis]
 
 fkl_ubvi = np.zeros((N_runs, N))
-#rkl_ubvi = np.zeros((N_runs, N))
 cput_ubvi = np.zeros((N_runs, N))
 fkl_bbvi = np.zeros((N_runs, N))
-#rkl_bbvi = np.zeros((N_runs, N))
 cput_bbvi = np.zeros((N_runs, N))
 fkl_bbvi2 = np.zeros((N_runs, N))
-#rkl_bbvi2 = np.zeros((N_runs, N))
 cput_bbvi2 = np.zeros((N_runs, N))
 
 for i in range(len(ubvis)):
@@ -80,9 +77,9 @@ lq = mixture_logpdf(X[:, np.newaxis], u_mu, u_Sig, u_wt)
 fig.line(X, np.exp(lq), line_width=6.5, color=pal[0], legend='UBVI')
 
 #plot UBVI samples
-samps = mixture_sample(u_mu, u_Sig, u_wt, 50000)
-hist, edges = np.histogram(samps, density=True, bins=100, range=(X.min(), X.max()))
-fig.quad(top=hist, bottom=0, left=edges[:-1], right=edges[1:], fill_color=pal[0], alpha=0.3, line_color='white')
+#samps = mixture_sample(u_mu, u_Sig, u_wt, 50000)
+#hist, edges = np.histogram(samps, density=True, bins=100, range=(X.min(), X.max()))
+#fig.quad(top=hist, bottom=0, left=edges[:-1], right=edges[1:], fill_color=pal[0], alpha=0.3, line_color='white')
 
 ##plot Cauchy samples
 #X = np.random.standard_cauchy(50000)

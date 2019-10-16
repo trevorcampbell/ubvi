@@ -23,7 +23,7 @@ adam_num_iters = 10000
 n_init = 10000
 init_inflation = 16
 lmb_good = lambda itr : 1./(1+itr)
-lmb_bad = lambda itr : 2./(1+itr)
+lmb_bad = lambda itr : 70./(1+itr)
 
 gauss = Gaussian(d, diag)
 adam = lambda x0, obj, grd : ubvi_adam(x0, obj, grd, adam_learning_rate, adam_num_iters, callback = gauss.print_perf)
@@ -35,17 +35,17 @@ if not os.path.exists('results/'):
 for i in range(N_runs):
     print('Run ' + str(i+1)+'/'+str(N_runs))
 
-    ##UBVI
-    #ubvi = UBVI(logp, gauss, adam, n_init = n_init, n_samples = n_samples, n_logfg_samples = n_logfg_samples, init_inflation = init_inflation)
-    #ubvi_results = []
-    #for n in range(1,N+1):
-    #    ubvi_results.append(ubvi.build(n))
+    #UBVI
+    ubvi = UBVI(logp, gauss, adam, n_init = n_init, n_samples = n_samples, n_logfg_samples = n_logfg_samples, init_inflation = init_inflation)
+    ubvi_results = []
+    for n in range(1,N+1):
+        ubvi_results.append(ubvi.build(n))
 
-    ##BBVI Good
-    #bbvi_good = BBVI(logp, gauss, adam, lmb = lmb_good, n_init = n_init, n_samples = n_samples, init_inflation = init_inflation)
-    #bbvi_good_results = []
-    #for n in range(1,N+1):
-    #    bbvi_good_results.append(bbvi_good.build(n))
+    #BBVI Good
+    bbvi_good = BBVI(logp, gauss, adam, lmb = lmb_good, n_init = n_init, n_samples = n_samples, init_inflation = init_inflation)
+    bbvi_good_results = []
+    for n in range(1,N+1):
+        bbvi_good_results.append(bbvi_good.build(n))
 
     #BBVI Bad
     bbvi_bad = BBVI(logp, gauss, adam, lmb = lmb_bad, n_init = n_init, n_samples = n_samples, init_inflation = init_inflation)
