@@ -3,6 +3,7 @@ import pickle as pk
 import bokeh.plotting as bkp
 import bokeh.layouts as bkl
 from scipy.stats import cauchy as sp_cauchy
+import matplotlib.pyplot as plt
 
 import sys, os
 sys.path.insert(1, os.path.join(sys.path[0], '../'))
@@ -21,7 +22,7 @@ def p_sample(n_samples):
     X[:, 1] = X[:, 1] - b*X[:, 0]**2 + 100*b
     return X
 
-p_samps = p_sample(100000)
+p_samps = p_sample(10000)
 
 #load results
 f = open('results/banana.pk', 'rb')
@@ -57,7 +58,7 @@ print('BVI-Good: ' + str(np.diff(cput_bbvi, axis=1).mean()) + '+/-' + str(np.dif
 print('BVI-Bad: ' + str(np.diff(cput_bbvi2, axis=1).mean()) + '+/-' + str(np.diff(cput_bbvi2, axis=1).std()))
 
 plot_idx = 0
-plot_N = 4
+plot_N = 29
 u_mu = ubvis[plot_idx][plot_N]['mus']
 u_Sig = ubvis[plot_idx][plot_N]['Sigs']
 u_wt = ubvis[plot_idx][plot_N]['weights']
@@ -71,39 +72,38 @@ b2_Sig = bbvi2s[plot_idx][plot_N]['Sigs']
 b2_wt = bbvi2s[plot_idx][plot_N]['weights']
 
 #plot the contours
-x = np.linspace(-30, 30, 600)
-y = np.linspace(-50, 20, 700)
+wg = 60
+hg = 70
+x = np.linspace(-30, 30, wg)
+y = np.linspace(-50, 20, hg)
 xx, yy = np.meshgrid(x, y)
 x = xx.reshape(-1,1)
 y = yy.reshape(-1,1)
 X = np.hstack((x,y))
 #plot the truth
-Y = np.exp(banana(X)).reshape(700,600)
+Y = np.exp(logp(X)).reshape(hg,wg)
 Levels = np.array([0.001, 0.0025, 0.005, 0.01, 0.015, 0.025])
 Levels = np.array([0.001, .005, 0.015, 0.025])
 plt.contour(xx, yy, Y, levels=Levels, colors='black', linewidths=2) #cmap="Blues_r")
 
 #plot UBVI
-lq_sqrt = 0.5*mvnlogpdf(X, u_mu, u_Sig, u_Siginv)
-lq = 2*logsumexp(lq_sqrt + np.log(u_lmb), axis=1)
-Y = np.exp(lq).reshape(700,600)
+lq = mixture_logpdf(X, u_mu, u_Sig, u_wt)
+Y = np.exp(lq).reshape(hg,wg)
 Levels = np.array([0.001, 0.0025, 0.005, 0.01, 0.015, 0.025])
 Levels = np.array([0.001, .005, 0.015, 0.025])
 plt.contour(xx, yy, Y, levels=Levels, colors=pal[0], linewidths=2) #cmap="Dark2")
 
 
 #plot BVI
-lq= mvnlogpdf(X, b_mu, b_Sig, b_Siginv)
-lq = logsumexp(lq + np.log(b_w), axis=1)
-Y = np.exp(lq).reshape(700,600)
+lq = mixture_logpdf(X, b_mu, b_Sig, b_wt)
+Y = np.exp(lq).reshape(hg,wg)
 Levels = np.array([0.001, 0.0025, 0.005, 0.01, 0.015, 0.025])
 Levels = np.array([0.001, .005, 0.015, 0.025])
 plt.contour(xx, yy, Y, levels=Levels, colors=pal[1], linewidths=2) #cmap="Dark2")
 
 #plot BVI
-lq= mvnlogpdf(X, b2_mu, b2_Sig, b2_Siginv)
-lq = logsumexp(lq + np.log(b2_w), axis=1)
-Y = np.exp(lq).reshape(700,600)
+lq = mixture_logpdf(X, b2_mu, b2_Sig, b2_wt)
+Y = np.exp(lq).reshape(hg,wg)
 Levels = np.array([0.001, 0.0025, 0.005, 0.01, 0.015, 0.025])
 Levels = np.array([0.001, .005, 0.015, 0.025])
 plt.contour(xx, yy, Y, levels=Levels, colors=pal[2], linewidths=2) #cmap="Dark2")
