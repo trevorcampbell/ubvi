@@ -38,6 +38,8 @@ class BoostingVI(object):
             grd = grad(self._objective)
             try:
                 new_param = self.opt_alg(x0, self._objective, grd)
+                if not np.all(np.isfinite(new_param)):
+                    raise
             except: #bbvi can run into bad degeneracies; if so, just revert to initialization
                 new_param = x0
             if self.verbose: print("Optimization of component " + str(i+1) + " complete")
@@ -50,6 +52,8 @@ class BoostingVI(object):
             self.weights_prev = self.weights.copy()
             try:
                 self.weights = np.atleast_1d(self._compute_weights())
+                if not np.all(np.isfinite(self.weights)):
+                    raise
             except: #bbvi can run into bad degeneracies; if so, just throw out the new component
                 self.weights = np.hstack((self.weights_prev, 0.))
 
