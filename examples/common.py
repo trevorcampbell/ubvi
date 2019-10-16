@@ -54,7 +54,7 @@ def postprocess_plot(fig, legend_font_size, orientation='vertical', location='to
 
 def mixture_logpdf(X, mu, Sig, wt):
     if len(Sig.shape) < 3:
-        Sig = Sig[:, :, np.newaxis]
+        Sig = np.array([np.diag(Sig[i, :]) for i in range(Sig.shape[0])])
     Siginv = np.linalg.inv(Sig)
     inner_prods = (X[:,np.newaxis,:]-mu)[:,:,:,np.newaxis] * Siginv *  (X[:,np.newaxis,:]-mu)[:,:,np.newaxis,:]
     lg = -0.5*inner_prods.sum(axis=3).sum(axis=2)

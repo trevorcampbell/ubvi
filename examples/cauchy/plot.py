@@ -47,7 +47,7 @@ print('BVI-Good: ' + str(np.diff(cput_bbvi, axis=1).mean()) + '+/-' + str(np.dif
 print('BVI-Bad: ' + str(np.diff(cput_bbvi2, axis=1).mean()) + '+/-' + str(np.diff(cput_bbvi2, axis=1).std()))
 
 plot_idx = 1
-plot_N = 23
+plot_N = 29
 u_mu = ubvis[plot_idx][plot_N]['mus']
 u_Sig = ubvis[plot_idx][plot_N]['Sigs']
 u_wt = ubvis[plot_idx][plot_N]['weights']
@@ -59,10 +59,6 @@ b_wt = bbvis[plot_idx][plot_N]['weights']
 b2_mu = bbvi2s[plot_idx][plot_N]['mus']
 b2_Sig = bbvi2s[plot_idx][plot_N]['Sigs']
 b2_wt = bbvi2s[plot_idx][plot_N]['weights']
-
-print(b2_mu)
-print(b2_Sig)
-print(b2_wt)
 
 #plot the fit
 X = np.linspace(-20,20,4000)
