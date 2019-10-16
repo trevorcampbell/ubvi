@@ -1,2 +1,4 @@
 *.swp
 results/
+*.html
+__pycache__/
