@@ -73,8 +73,8 @@ b_wt = bbvis[plot_idx][plot_N]['weights']
 #b2_wt = bbvi2s[plot_idx][plot_N]['weights']
 
 #plot the contours
-wg = 60
-hg = 70
+wg = 120
+hg = 140
 x = np.linspace(-30, 30, wg)
 y = np.linspace(-50, 20, hg)
 xx, yy = np.meshgrid(x, y)
