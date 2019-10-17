@@ -52,7 +52,6 @@ Z_phish, X_phish, Y_phish = load_data('../data/phishing.npz', subset_sz)
 Y_phish[Y_phish == -1] = 0
 
 #ensure we use the same Sig each time
-np.random.seed(1)
 nu = 2.
 Sig_synth = np.array([[1., -0.9], [-0.9, 1.]])
 mu_synth = np.zeros(2)
@@ -62,7 +61,6 @@ mu_ds1 = np.zeros(Sig_ds1.shape[0])
 Sig_phish = np.random.randn(X_phish.shape[1], X_phish.shape[1])
 Sig_phish = Sig_phish.T.dot(Sig_phish)
 mu_phish = np.zeros(Sig_phish.shape[0])
-np.random.seed()
 
 d_synth = Z_synth.shape[1]
 d_ds1 = Z_ds1.shape[1]
@@ -139,77 +137,84 @@ for d, nm in [(logistic_data_synth, 'synth'), (logistic_data_ds1, 'ds1'), (logis
         np.save('results/'+nm+'_mcmc_time.npy', tf-t0)
    
 
-N = 3
+############################## (U)BVI / ADVI Params ######################################
+
+
+N = 10
 diag = True
-n_samples = 500
+n_samples = 2000
 n_logfg_samples = 10000
-adam_learning_rate= lambda itr : 1./(itr+1)
-adam_num_iters = 3000
+adam_learning_rate= lambda itr : 10./np.sqrt(itr+1)
+adam_num_iters = 10000
 n_init = 10000
-init_inflation = 100
+init_inflation = 16
+
 
 adam = lambda x0, obj, grd : ubvi_adam(x0, obj, grd, adam_learning_rate, adam_num_iters, callback = gauss.print_perf)
 
 ############################## synthetic ######################################
-
-gauss = Gaussian(d_synth, diag)
-lmb_bbvi = lambda itr : 10.0/(1.+itr)
-lmb_advi = lambda itr : 1.
+if sys.argv[1] == 'synth':
+    gauss = Gaussian(d_synth, diag)
+    lmb_bbvi = lambda itr : 10.0/(1.+itr)
+    lmb_advi = lambda itr : 1.
+        
+    print('Synth UBVI')
+    ubvi = UBVI(logp_synth, gauss, adam, n_init = n_init, n_samples = n_samples, n_logfg_samples = n_logfg_samples, init_inflation = init_inflation)
+    ubvi_synth = ubvi.build(N)
     
-print('Synth UBVI')
-ubvi = UBVI(logp_synth, gauss, adam, n_init = n_init, n_samples = n_samples, n_logfg_samples = n_logfg_samples, init_inflation = init_inflation)
-ubvi_synth = ubvi.build(N)
+    print('Synth BVI')
+    bbvi = BBVI(logp_synth, gauss, adam, lmb = lmb_bbvi, n_init = n_init, n_samples = n_samples, init_inflation = init_inflation)
+    bbvi_synth = bbvi.build(N)
+    
+    print('Synth ADVI')
+    advi = BBVI(logp_synth, gauss, adam, lmb = lmb_advi, n_init = n_init, n_samples = n_samples, init_inflation = init_inflation)
+    advi_synth = advi.build(1)
+    
+    f = open('results/logistic_synth_results_'+sys.argv[2]+'.pk', 'wb')
+    pk.dump([ubvi_synth, bbvi_synth, advi_synth], f)
+    f.close()
 
-print('Synth BVI')
-bbvi = BBVI(logp_synth, gauss, adam, lmb = lmb_bbvi, n_init = n_init, n_samples = n_samples, init_inflation = init_inflation)
-bbvi_synth = bbvi.build(N)
-
-print('Synth ADVI')
-advi = BBVI(logp_synth, gauss, adam, lmb = lmb_advi, n_init = n_init, n_samples = n_samples, init_inflation = init_inflation)
-advi_synth = advi.build(1)
-
-f = open('results/logistic_synth_results.pk', 'wb')
-pk.dump([ubvi_synth, bbvi_synth, advi_synth], f)
-f.close()
 ################################## DS1 ########################################
 
-gauss = Gaussian(d_ds1, diag)
-lmb_bbvi = lambda itr : 10./(1.+itr)
-lmb_advi = lambda itr : 1.
-
-print('DS1 UBVI')
-ubvi = UBVI(logp_ds1, gauss, adam, n_init = n_init, n_samples = n_samples, n_logfg_samples = n_logfg_samples, init_inflation = init_inflation)
-ubvi_ds1 = ubvi.build(N)
-
-print('DS1 BVI')
-bbvi = BBVI(logp_ds1, gauss, adam, lmb = lmb_bbvi, n_init = n_init, n_samples = n_samples, init_inflation = init_inflation)
-bbvi_ds1 = bbvi.build(N)
-
-print('DS1 ADVI')
-advi = BBVI(logp_ds1, gauss, adam, lmb = lmb_advi, n_init = n_init, n_samples = n_samples, init_inflation = init_inflation)
-advi_ds1 = advi.build(1)
-   
-f = open('results/logistic_ds1_results.pk', 'wb')
-pk.dump([ubvi_ds1, bbvi_ds1, advi_ds1], f)
-f.close()
+if sys.argv[1] == 'ds1':
+    gauss = Gaussian(d_ds1, diag)
+    lmb_bbvi = lambda itr : 10./(1.+itr)
+    lmb_advi = lambda itr : 1.
+    
+    print('DS1 UBVI')
+    ubvi = UBVI(logp_ds1, gauss, adam, n_init = n_init, n_samples = n_samples, n_logfg_samples = n_logfg_samples, init_inflation = init_inflation)
+    ubvi_ds1 = ubvi.build(N)
+    
+    print('DS1 BVI')
+    bbvi = BBVI(logp_ds1, gauss, adam, lmb = lmb_bbvi, n_init = n_init, n_samples = n_samples, init_inflation = init_inflation)
+    bbvi_ds1 = bbvi.build(N)
+    
+    print('DS1 ADVI')
+    advi = BBVI(logp_ds1, gauss, adam, lmb = lmb_advi, n_init = n_init, n_samples = n_samples, init_inflation = init_inflation)
+    advi_ds1 = advi.build(1)
+       
+    f = open('results/logistic_ds1_results_'+sys.argv[2]+'.pk', 'wb')
+    pk.dump([ubvi_ds1, bbvi_ds1, advi_ds1], f)
+    f.close()
 ################################# Phishing ####################################
 
-gauss = Gaussian(d_phish, diag)
-lmb_bbvi = lambda itr : 10./(1.+itr)
-lmb_advi = lambda itr : 1.
-
-print('DS1 UBVI')
-ubvi = UBVI(logp_phish, gauss, adam, n_init = n_init, n_samples = n_samples, n_logfg_samples = n_logfg_samples, init_inflation = init_inflation)
-ubvi_phish = ubvi.build(N)
-
-print('DS1 BVI')
-bbvi = BBVI(logp_phish, gauss, adam, lmb = lmb_bbvi, n_init = n_init, n_samples = n_samples, init_inflation = init_inflation)
-bbvi_phish = bbvi.build(N)
-
-print('DS1 ADVI')
-advi = BBVI(logp_phish, gauss, adam, lmb = lmb_advi, n_init = n_init, n_samples = n_samples, init_inflation = init_inflation)
-advi_phish = advi.build(1)
- 
-f = open('results/logistic_phish_results.pk', 'wb')
-pk.dump([ubvi_phish, bbvi_phish, advi_phish], f)
-f.close()
+if sys.argv[1] == 'phish':
+    gauss = Gaussian(d_phish, diag)
+    lmb_bbvi = lambda itr : 10./(1.+itr)
+    lmb_advi = lambda itr : 1.
+    
+    print('DS1 UBVI')
+    ubvi = UBVI(logp_phish, gauss, adam, n_init = n_init, n_samples = n_samples, n_logfg_samples = n_logfg_samples, init_inflation = init_inflation)
+    ubvi_phish = ubvi.build(N)
+    
+    print('DS1 BVI')
+    bbvi = BBVI(logp_phish, gauss, adam, lmb = lmb_bbvi, n_init = n_init, n_samples = n_samples, init_inflation = init_inflation)
+    bbvi_phish = bbvi.build(N)
+    
+    print('DS1 ADVI')
+    advi = BBVI(logp_phish, gauss, adam, lmb = lmb_advi, n_init = n_init, n_samples = n_samples, init_inflation = init_inflation)
+    advi_phish = advi.build(1)
+     
+    f = open('results/logistic_phish_results_'+sys.argv[2]+'.pk', 'wb')
+    pk.dump([ubvi_phish, bbvi_phish, advi_phish], f)
+    f.close()
