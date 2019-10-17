@@ -15,7 +15,8 @@ p_samps = np.random.standard_cauchy(10000)[:,np.newaxis]
 
 #load results
 f = open('results/cauchy.pk', 'rb')
-ubvis, bbvis, bbvi2s = pk.load(f)
+#ubvis, bbvis, bbvi2s = pk.load(f)
+ubvis, bbvis = pk.load(f)
 f.close()
 
 N_runs = len(ubvis)
@@ -25,26 +26,26 @@ fkl_ubvi = np.zeros((N_runs, N))
 cput_ubvi = np.zeros((N_runs, N))
 fkl_bbvi = np.zeros((N_runs, N))
 cput_bbvi = np.zeros((N_runs, N))
-fkl_bbvi2 = np.zeros((N_runs, N))
-cput_bbvi2 = np.zeros((N_runs, N))
+#fkl_bbvi2 = np.zeros((N_runs, N))
+#cput_bbvi2 = np.zeros((N_runs, N))
 
 for i in range(len(ubvis)):
     print('UBVI ' + str(i))
     cput_ubvi[i,:] = np.array([ ubvis[i][n]['cput'] for n in range(len(ubvis[i]))])
     fkl_ubvi[i,:] = np.array([kl_estimate(ubvis[i][n]['mus'], ubvis[i][n]['Sigs'], ubvis[i][n]['weights'], logp, p_samps, direction='forward') for n in range(len(ubvis[i]))])
     
-    print('BBVI Good ' + str(i))
+    print('BBVI ' + str(i))
     cput_bbvi[i,:] = np.array([ bbvis[i][n]['cput'] for n in range(len(bbvis[i]))])
     fkl_bbvi[i,:] = np.array([kl_estimate(bbvis[i][n]['mus'], bbvis[i][n]['Sigs'], bbvis[i][n]['weights'], logp, p_samps, direction='forward') for n in range(len(bbvis[i]))])
 
-    print('BBVI Bad ' + str(i))
-    cput_bbvi2[i,:] = np.array([ bbvi2s[i][n]['cput'] for n in range(len(bbvi2s[i]))])
-    fkl_bbvi2[i,:] = np.array([kl_estimate(bbvi2s[i][n]['mus'], bbvi2s[i][n]['Sigs'], bbvi2s[i][n]['weights'], logp, p_samps, direction='forward') for n in range(len(bbvi2s[i]))])
+    #print('BBVI Bad ' + str(i))
+    #cput_bbvi2[i,:] = np.array([ bbvi2s[i][n]['cput'] for n in range(len(bbvi2s[i]))])
+    #fkl_bbvi2[i,:] = np.array([kl_estimate(bbvi2s[i][n]['mus'], bbvi2s[i][n]['Sigs'], bbvi2s[i][n]['weights'], logp, p_samps, direction='forward') for n in range(len(bbvi2s[i]))])
 
 print('CPU Time per component:')
 print('UBVI: ' + str(np.diff(cput_ubvi, axis=1).mean()) + '+/-' + str(np.diff(cput_ubvi, axis=1).std()))
 print('BVI-Good: ' + str(np.diff(cput_bbvi, axis=1).mean()) + '+/-' + str(np.diff(cput_bbvi, axis=1).std()))
-print('BVI-Bad: ' + str(np.diff(cput_bbvi2, axis=1).mean()) + '+/-' + str(np.diff(cput_bbvi2, axis=1).std()))
+#print('BVI-Bad: ' + str(np.diff(cput_bbvi2, axis=1).mean()) + '+/-' + str(np.diff(cput_bbvi2, axis=1).std()))
 
 plot_idx = 0
 plot_N = 29
@@ -56,9 +57,9 @@ b_mu = bbvis[plot_idx][plot_N]['mus']
 b_Sig = bbvis[plot_idx][plot_N]['Sigs']
 b_wt = bbvis[plot_idx][plot_N]['weights']
 
-b2_mu = bbvi2s[plot_idx][plot_N]['mus']
-b2_Sig = bbvi2s[plot_idx][plot_N]['Sigs']
-b2_wt = bbvi2s[plot_idx][plot_N]['weights']
+#b2_mu = bbvi2s[plot_idx][plot_N]['mus']
+#b2_Sig = bbvi2s[plot_idx][plot_N]['Sigs']
+#b2_wt = bbvi2s[plot_idx][plot_N]['weights']
 
 #plot the fit
 X = np.linspace(-20,20,4000)
@@ -66,9 +67,9 @@ fig = bkp.figure(width=1000, height=1000, x_range=(X.min(), X.max()))
 preprocess_plot(fig, '42pt')
 #plot the truth
 fig.line(X, np.exp(logp(X)), line_width=6.5, color='black', legend='p(x)')
-#plot BVIbad
-lq = mixture_logpdf(X[:, np.newaxis], b2_mu, b2_Sig, b2_wt)
-fig.line(X, np.exp(lq), line_width=6.5, color=pal[2], legend='BVI70')
+##plot BVIbad
+#lq = mixture_logpdf(X[:, np.newaxis], b2_mu, b2_Sig, b2_wt)
+#fig.line(X, np.exp(lq), line_width=6.5, color=pal[2], legend='BVI70')
 #plot BVIgood
 lq = mixture_logpdf(X[:, np.newaxis], b_mu, b_Sig, b_wt)
 fig.line(X, np.exp(lq), line_width=6.5, color=pal[1], legend='BVI1')
@@ -95,14 +96,15 @@ fig2.line(np.arange(fkl_ubvi.shape[1])+1, np.percentile(fkl_ubvi, 75, axis=0), l
 fig2.line(np.arange(fkl_bbvi.shape[1])+1, np.percentile(fkl_bbvi, 50, axis=0), line_width=6.5, color=pal[1])#, legend='BVI-1/(n+1)')
 fig2.line(np.arange(fkl_bbvi.shape[1])+1, np.percentile(fkl_bbvi, 25, axis=0), line_width=6.5, color=pal[1], line_dash='dashed')
 fig2.line(np.arange(fkl_bbvi.shape[1])+1, np.percentile(fkl_bbvi, 75, axis=0), line_width=6.5, color=pal[1], line_dash='dashed')
-fig2.line(np.arange(fkl_bbvi2.shape[1])+1, np.percentile(fkl_bbvi2, 50, axis=0), line_width=6.5, color=pal[2])#, legend='BVI-70/(n+1)')
-fig2.line(np.arange(fkl_bbvi2.shape[1])+1, np.percentile(fkl_bbvi2, 25, axis=0), line_width=6.5, color=pal[2], line_dash='dashed')
-fig2.line(np.arange(fkl_bbvi2.shape[1])+1, np.percentile(fkl_bbvi2, 75, axis=0), line_width=6.5, color=pal[2], line_dash='dashed')
+#fig2.line(np.arange(fkl_bbvi2.shape[1])+1, np.percentile(fkl_bbvi2, 50, axis=0), line_width=6.5, color=pal[2])#, legend='BVI-70/(n+1)')
+#fig2.line(np.arange(fkl_bbvi2.shape[1])+1, np.percentile(fkl_bbvi2, 25, axis=0), line_width=6.5, color=pal[2], line_dash='dashed')
+#fig2.line(np.arange(fkl_bbvi2.shape[1])+1, np.percentile(fkl_bbvi2, 75, axis=0), line_width=6.5, color=pal[2], line_dash='dashed')
 
 #plot the KL vs cput
 fig3 = bkp.figure(width=1000,height=500,x_axis_label='CPU Time (s)', y_axis_label='KL(p || q)', y_axis_type='log')
 preprocess_plot(fig3, '42pt', log_scale_x = True, log_scale_y = True)
-for cput, kl, nm, clrid in [(cput_ubvi, fkl_ubvi, 'UBVI', 0), (cput_bbvi, fkl_bbvi, 'BVI1', 1), (cput_bbvi2, fkl_bbvi2, 'BVI70', 2)]:
+#for cput, kl, nm, clrid in [(cput_ubvi, fkl_ubvi, 'UBVI', 0), (cput_bbvi, fkl_bbvi, 'BVI1', 1), (cput_bbvi2, fkl_bbvi2, 'BVI70', 2)]:
+for cput, kl, nm, clrid in [(cput_ubvi, fkl_ubvi, 'UBVI', 0), (cput_bbvi, fkl_bbvi, 'BVI1', 1)]:
   cput_25 = np.percentile(np.cumsum(cput, axis=1), 25, axis=0)
   cput_50 = np.percentile(np.cumsum(cput, axis=1), 50, axis=0)
   cput_75 = np.percentile(np.cumsum(cput, axis=1), 75, axis=0)

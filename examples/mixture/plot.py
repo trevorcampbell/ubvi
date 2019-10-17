@@ -18,7 +18,7 @@ bbvis = res[0]
 bbvi_lmbs = res[1]
 ubvi = res[2]
 
-X = np.linspace(-20,60,5000)
+X = np.linspace(-10,40,5000)
 
 fig = bkp.figure()
 preprocess_plot(fig, '24pt', False)
@@ -31,12 +31,12 @@ for i in range(len(bbvis)):
   #compute log density for KL boosting VI
   lg = mixture_logpdf(X[:, np.newaxis], mus, Sigs, weights)
   #plot
-  fig.line(X, np.exp(0.5*lg), line_width=6.5, color=pal[i+1], legend='BVI'+str(lmb), line_dash='dashed')
+  fig.line(X, np.exp(0.5*lg), line_width=6.5, color=pal[i+1], legend='BVI'+str(lmb))
 
 #plot true density
 lg = mixture_logpdf(X[:, np.newaxis], np.array([[0.], [25.]]), np.array([ [[0.5]], [[5.]] ]), np.array([0.5, 0.5]))
 #lg = mixture_logpdf(X[:, np.newaxis], np.array([[0.]]), np.array([ [[1.0]]]), np.array([1.0]))
-fig.line(X, np.exp(0.5*lg), line_width=6.5, line_color='black', legend='p(x)', line_dash = 'dashed') 
+fig.line(X, np.exp(0.5*lg), line_width=6.5, line_color='black', legend='p(x)') 
 
 #compute log density for UBVI
 mus = ubvi['mus']
