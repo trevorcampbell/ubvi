@@ -4,11 +4,13 @@ import os
 import time
 import pickle as pk
 import pystan
+import sys
 
 from ubvi.components import Gaussian
 from ubvi.optimization import adam as ubvi_adam
 from ubvi.inference import UBVI, BBVI
 from ubvi.autograd import logsumexp
+
 
 def log_cauchy(X):
   return -np.log(np.pi) - np.log(1.+X**2)
@@ -144,7 +146,7 @@ N = 10
 diag = True
 n_samples = 2000
 n_logfg_samples = 10000
-adam_learning_rate= lambda itr : 10./np.sqrt(itr+1)
+adam_learning_rate= lambda itr : 1./np.sqrt(itr+1)
 adam_num_iters = 10000
 n_init = 10000
 init_inflation = 16
@@ -155,15 +157,15 @@ adam = lambda x0, obj, grd : ubvi_adam(x0, obj, grd, adam_learning_rate, adam_nu
 ############################## synthetic ######################################
 if sys.argv[1] == 'synth':
     gauss = Gaussian(d_synth, diag)
-    lmb_bbvi = lambda itr : 10.0/(1.+itr)
+    lmb_bbvi = lambda itr : 1./np.sqrt(1.+itr)
     lmb_advi = lambda itr : 1.
         
-    print('Synth UBVI')
-    ubvi = UBVI(logp_synth, gauss, adam, n_init = n_init, n_samples = n_samples, n_logfg_samples = n_logfg_samples, init_inflation = init_inflation)
-    ubvi_synth = ubvi.build(N)
+    #print('Synth UBVI')
+    #ubvi = UBVI(logp_synth, gauss, adam, n_init = n_init, n_samples = n_samples, n_logfg_samples = n_logfg_samples, init_inflation = init_inflation)
+    #ubvi_synth = ubvi.build(N)
     
     print('Synth BVI')
-    bbvi = BBVI(logp_synth, gauss, adam, lmb = lmb_bbvi, n_init = n_init, n_samples = n_samples, init_inflation = init_inflation)
+    bbvi = BBVI(logp_synth, gauss, adam, lmb = lmb_bbvi, n_init = n_init, n_samples = n_samples, init_inflation = init_inflation, eps=1e-6)
     bbvi_synth = bbvi.build(N)
     
     print('Synth ADVI')
@@ -175,10 +177,9 @@ if sys.argv[1] == 'synth':
     f.close()
 
 ################################## DS1 ########################################
-
 if sys.argv[1] == 'ds1':
     gauss = Gaussian(d_ds1, diag)
-    lmb_bbvi = lambda itr : 10./(1.+itr)
+    lmb_bbvi = lambda itr : 1./np.sqrt(1.+itr)
     lmb_advi = lambda itr : 1.
     
     print('DS1 UBVI')
@@ -196,11 +197,12 @@ if sys.argv[1] == 'ds1':
     f = open('results/logistic_ds1_results_'+sys.argv[2]+'.pk', 'wb')
     pk.dump([ubvi_ds1, bbvi_ds1, advi_ds1], f)
     f.close()
+
 ################################# Phishing ####################################
 
 if sys.argv[1] == 'phish':
     gauss = Gaussian(d_phish, diag)
-    lmb_bbvi = lambda itr : 10./(1.+itr)
+    lmb_bbvi = lambda itr : 1./np.sqrt(1.+itr)
     lmb_advi = lambda itr : 1.
     
     print('DS1 UBVI')

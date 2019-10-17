@@ -9,12 +9,13 @@ from ..optimization import simplex_sgd
 
 class BBVI(BoostingVI):
     
-    def __init__(self, logp, component_dist, opt_alg, lmb = lambda itr : 1, n_samples = 100, n_simplex_iters = 3000, **kw):
+    def __init__(self, logp, component_dist, opt_alg, lmb = lambda itr : 1, n_samples = 100, n_simplex_iters = 3000, eps = None, **kw):
         super().__init__(component_dist, opt_alg, **kw)
         self.logp = logp
         self.lmb = lmb
         self.n_samples = n_samples
         self.n_simplex_iters = n_simplex_iters
+        self.eps = eps
     
     def _compute_weights(self):
         if self.params.shape[0] == 1:
@@ -39,7 +40,10 @@ class BBVI(BoostingVI):
                 #need to add a dimension so that each sample corresponds to a row in lg
                 lg = lg[:,np.newaxis] 
             #lg = logsumexp(lg+np.log(np.maximum(self.weights[-1], 1e-64)), axis=1).mean()
-            lg = logsumexp(lg[:, self.weights > 0]+np.log(self.weights[self.weights>0]), axis=1).mean()
+            lg = lg[:, self.weights > 0]+np.log(self.weights[self.weights>0])
+            if self.eps:
+                lg = np.hstack((lg, np.log(self.eps)*np.ones((lg.shape[0],1))))
+            lg = logsumexp(lg, axis=1).mean()
         else:
             lg = 0.
         lh = self.component_dist.logpdf(x, h_samples).mean()
