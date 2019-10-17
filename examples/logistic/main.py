@@ -160,12 +160,12 @@ if sys.argv[1] == 'synth':
     lmb_bbvi = lambda itr : 1./np.sqrt(1.+itr)
     lmb_advi = lambda itr : 1.
         
-    #print('Synth UBVI')
-    #ubvi = UBVI(logp_synth, gauss, adam, n_init = n_init, n_samples = n_samples, n_logfg_samples = n_logfg_samples, init_inflation = init_inflation)
-    #ubvi_synth = ubvi.build(N)
+    print('Synth UBVI')
+    ubvi = UBVI(logp_synth, gauss, adam, n_init = n_init, n_samples = n_samples, n_logfg_samples = n_logfg_samples, init_inflation = init_inflation)
+    ubvi_synth = ubvi.build(N)
     
     print('Synth BVI')
-    bbvi = BBVI(logp_synth, gauss, adam, lmb = lmb_bbvi, n_init = n_init, n_samples = n_samples, init_inflation = init_inflation, eps=1e-6)
+    bbvi = BBVI(logp_synth, gauss, adam, lmb = lmb_bbvi, n_init = n_init, n_samples = n_samples, init_inflation = init_inflation, eps=1e-3)
     bbvi_synth = bbvi.build(N)
     
     print('Synth ADVI')
@@ -187,7 +187,7 @@ if sys.argv[1] == 'ds1':
     ubvi_ds1 = ubvi.build(N)
     
     print('DS1 BVI')
-    bbvi = BBVI(logp_ds1, gauss, adam, lmb = lmb_bbvi, n_init = n_init, n_samples = n_samples, init_inflation = init_inflation)
+    bbvi = BBVI(logp_ds1, gauss, adam, lmb = lmb_bbvi, n_init = n_init, n_samples = n_samples, init_inflation = init_inflation, eps=1e-3)
     bbvi_ds1 = bbvi.build(N)
     
     print('DS1 ADVI')
@@ -210,7 +210,7 @@ if sys.argv[1] == 'phish':
     ubvi_phish = ubvi.build(N)
     
     print('DS1 BVI')
-    bbvi = BBVI(logp_phish, gauss, adam, lmb = lmb_bbvi, n_init = n_init, n_samples = n_samples, init_inflation = init_inflation)
+    bbvi = BBVI(logp_phish, gauss, adam, lmb = lmb_bbvi, n_init = n_init, n_samples = n_samples, init_inflation = init_inflation, eps=1e-3)
     bbvi_phish = bbvi.build(N)
     
     print('DS1 ADVI')
