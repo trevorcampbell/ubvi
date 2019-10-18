@@ -151,6 +151,17 @@ adam_num_iters = 10000
 n_init = 10000
 init_inflation = 16
 
+N = 3
+diag = True
+n_samples = 20
+n_logfg_samples = 100
+adam_learning_rate= lambda itr : 1./np.sqrt(itr+1)
+adam_num_iters = 100
+n_init = 100
+init_inflation = 16
+
+
+
 adam = lambda x0, obj, grd : ubvi_adam(x0, obj, grd, adam_learning_rate, adam_num_iters, callback = gauss.print_perf)
 if sys.argv[1] == 'synth':
     dimlogp = (d_synth, logp_synth)

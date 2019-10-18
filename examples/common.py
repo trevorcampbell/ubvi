@@ -84,7 +84,7 @@ def mixture_logpdf(X, mu, Sig, wt):
 
 def mixture_sample(mu, Sig, wt, n_samples):
     if len(Sig.shape) < 3:
-        Sig = Sig[:, :, np.newaxis]
+        Sig = np.array([np.diag(Sig[i, :]) for i in range(Sig.shape[0])])
     cts = np.random.multinomial(n_samples, wt)
     X = np.zeros((n_samples, mu.shape[1]))
     c = 0

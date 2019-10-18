@@ -21,20 +21,8 @@ def expected_dist(X, Y):
 
 def mixture_energy_dist(true_samples, g_mu, g_Sig, g_w, n_samples):
   #take samples from the mixture
-  g_samples = np.zeros((n_samples, true_samples.shape[1]))
-  #compute # samples in each mixture component
-  n_samples_k = np.random.multinomial(n_samples, g_w/g_w.sum()) #normalize g_w just in case numerical precision loss earlier
-  c_samples = np.cumsum(n_samples_k)
-  #sample the mixture components
-  for j in range(g_mu.shape[0]):
-    if n_samples_k[j] > 0:
-      g_samples[(0 if j == 0 else c_samples[j-1]):c_samples[j], :] = np.random.multivariate_normal(g_mu[j,:], g_Sig[j,:,:], n_samples_k[j])
-
-  #f = bkp.figure()
-  #f.circle(true_samples[:, 0], true_samples[:, 1], color='black')
-  #f.circle(g_samples[:, 0], g_samples[:, 1], color='blue')
-  #bkp.show(f)
-
+  g_samples = mixture_sample(g_mu, g_Sig, g_w, n_samples)
+  #compute the energy distance
   print('computing EYY')
   EYY = expected_dist(true_samples, true_samples)
   print('computing EXX')
@@ -49,8 +37,8 @@ nms = ['synth', 'ds1', 'phish']
 ds = [2, 10, 10]
 
 figs = []
-n_energy_dist_samples = 1000
-n_theta_subsample = 10000
+#n_energy_dist_samples = 1000
+#n_theta_subsample = 10000
 n_energy_dist_samples = 100
 n_theta_subsample = 100
 
@@ -68,7 +56,7 @@ for nm, d in zip(nms, ds):
   theta0s=theta0s.reshape(theta0s.shape[0]*theta0s.shape[1])
   thetas = samps[:, :, 1:d+1]
   thetas=thetas.reshape((thetas.shape[0]*thetas.shape[1], thetas.shape[2]))
-  logprbs = samps[:,:,-1]
+  #logprbs = samps[:,:,-1]
 
   ##plot diagnostic log probs for mixing
   #figs.append([])
@@ -101,7 +89,7 @@ for nm, d in zip(nms, ds):
     f = open(os.path.join('results', fn), 'rb')
     ubvi, bbvi, advi = pk.load(f)
     f.close()
-    n_comp_max = max(n_comp_max, ubvi[-1]['weights'].shape[0], bbvi[-1]['weights'].shape[0])
+    n_comp_max = max(n_comp_max, len(ubvi), len(bbvi))
 
   #allocate memory for results
   energy_ubvi = np.zeros((len(fnames), n_comp_max))
@@ -118,32 +106,32 @@ for nm, d in zip(nms, ds):
     ubvi, bbvi, advi = pk.load(f)
     f.close()
 
+    
 
     #UBVI
     #compute energy distances
-    for i in range(ubvi['weights'].shape[0]):
-      print('computing energy dist: ' + nm + ' UBVI ' + str(n+1) +'/'+str(len(fnames))+ ' results files, iter ' + str(i+1) + '/' + str(ubvi[-1].shape[0]))
+    for i in range(len(ubvi)):
+      print('computing energy dist: ' + nm + ' UBVI ' + str(n+1) +'/'+str(len(fnames))+ ' results files, iter ' + str(i+1) + '/' + str(len(ubvi)))
       energy_ubvi[n, i] = mixture_energy_dist(thetas, ubvi[i]['mus'], ubvi[i]['Sigs'], ubvi[i]['weights'], n_energy_dist_samples)
       cput_ubvi[n, i] = ubvi[i]['cput']
 
     #for any remaining components, just use fixed approx (since terminated early)
-    cput_ubvi[n, ubvi[-1]['weights'].shape[0]:] = cput_ubvi[n, ubvi[-1]['weights'].shape[0]-1] 
-    for i in range(ubvi[-1].shape[0], n_comp_max):
+    cput_ubvi[n, len(ubvi):] = cput_ubvi[n, len(ubvi)-1] 
+    for i in range(len(ubvi), n_comp_max):
       energy_ubvi[n, i] = energy_ubvi[n, i-1]
 
     #BBVI
     #compute energy distances
-    for i in range(bbvi['weights'].shape[0]):
-      print('computing energy dist: ' + nm + ' BBVI ' + str(n+1) +'/'+str(len(fnames))+ ' results files, iter ' + str(i+1) + '/' + str(bbvi[-1].shape[0]))
+    for i in range(len(bbvi)):
+      print('computing energy dist: ' + nm + ' UBVI ' + str(n+1) +'/'+str(len(fnames))+ ' results files, iter ' + str(i+1) + '/' + str(len(bbvi)))
       energy_bbvi[n, i] = mixture_energy_dist(thetas, bbvi[i]['mus'], bbvi[i]['Sigs'], bbvi[i]['weights'], n_energy_dist_samples)
       cput_bbvi[n, i] = bbvi[i]['cput']
 
     #for any remaining components, just use fixed approx (since terminated early)
-    cput_bbvi[n, bbvi[-1]['weights'].shape[0]:] = cput_bbvi[n, bbvi[-1]['weights'].shape[0]-1] 
-    for i in range(bbvi[-1].shape[0], n_comp_max):
+    cput_bbvi[n, len(bbvi):] = cput_bbvi[n, len(bbvi)-1] 
+    for i in range(len(bbvi), n_comp_max):
       energy_bbvi[n, i] = energy_bbvi[n, i-1]
 
- 
     print('computing energy dist: ' + nm + ' ADVI ' + str(n+1) +'/'+str(len(fnames))+ ' results files')
     energy_advi[n] = mixture_energy_dist(thetas, advi[0]['mus'], advi[0]['Sigs'], advi[0]['weights'], n_energy_dist_samples)
     cput_advi[n] = advi[0]['cput']
