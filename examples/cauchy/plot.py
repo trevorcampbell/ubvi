@@ -66,16 +66,32 @@ X = np.linspace(-100,100,4000)
 fig = bkp.figure(width=1000, height=1000, x_range=(X.min(), X.max()))
 preprocess_plot(fig, '42pt')
 #plot the truth
-fig.line(X, logp(X), line_width=6.5, color='black', legend='p(x)')
+fig.line(X, np.exp(logp(X)), line_width=6.5, color='black', legend='p(x)')
 #plot BVI eps
 lq = mixture_logpdf(X[:, np.newaxis], beps_mu, beps_Sig, beps_wt)
-fig.line(X, lq, line_width=6.5, color=pal[2], legend='BVI+')
+fig.line(X, np.exp(lq), line_width=6.5, color=pal[2], legend='BVI+')
 #plot BVI
 lq = mixture_logpdf(X[:, np.newaxis], b_mu, b_Sig, b_wt)
-fig.line(X, lq, line_width=6.5, color=pal[1], legend='BVI')
+fig.line(X, np.exp(lq), line_width=6.5, color=pal[1], legend='BVI')
 #plot UBVI
 lq = mixture_logpdf(X[:, np.newaxis], u_mu, u_Sig, u_wt)
-fig.line(X, lq, line_width=6.5, color=pal[0], legend='UBVI')
+fig.line(X, np.exp(lq), line_width=6.5, color=pal[0], legend='UBVI')
+
+#plot the log fit
+X = np.linspace(-100,100,4000)
+figL = bkp.figure(width=1000, height=1000, x_range=(X.min(), X.max()))
+preprocess_plot(fig, '42pt')
+#plot the truth
+figL.line(X, logp(X), line_width=6.5, color='black')
+#plot BVI eps
+lq = mixture_logpdf(X[:, np.newaxis], beps_mu, beps_Sig, beps_wt)
+figL.line(X, lq, line_width=6.5, color=pal[2])
+#plot BVI
+lq = mixture_logpdf(X[:, np.newaxis], b_mu, b_Sig, b_wt)
+figL.line(X, lq, line_width=6.5, color=pal[1])
+#plot UBVI
+lq = mixture_logpdf(X[:, np.newaxis], u_mu, u_Sig, u_wt)
+figL.line(X, lq, line_width=6.5, color=pal[0])
 
 #plot UBVI samples
 #samps = mixture_sample(u_mu, u_Sig, u_wt, 50000)
@@ -143,7 +159,8 @@ for cput, kl, nm, clrid in [(cput_ubvi, fkl_ubvi, 'UBVI', 0), (cput_bbvi, fkl_bb
 #  fig5.segment(x0=cput_25, y0=rkl_50, x1=cput_75, y1=rkl_50, color=pal[clrid], line_width=4)#, legend=nm)
 
 
-postprocess_plot(fig, '42pt')
+postprocess_plot(fig, '42pt', orientation='horizontal', glyph_height=80)
+postprocess_plot(figL, '42pt')
 postprocess_plot(fig2, '42pt')
 postprocess_plot(fig3, '42pt')
 #postprocess_plot(fig4, '42pt')

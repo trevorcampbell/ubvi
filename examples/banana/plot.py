@@ -8,6 +8,11 @@ import matplotlib.pyplot as plt
 import sys, os
 sys.path.insert(1, os.path.join(sys.path[0], '../'))
 from common import mixture_logpdf, preprocess_plot, postprocess_plot, pal, logFmtr, kl_estimate, mixture_sample
+from ubvi.autograd import logsumexp
+
+plt.rcParams.update({'font.size': 22})
+
+
 
 def logp(X):
     X=np.atleast_2d(X)
@@ -71,44 +76,64 @@ beps_mu = bbviepss[plot_idx][plot_N]['mus']
 beps_Sig = bbviepss[plot_idx][plot_N]['Sigs']
 beps_wt = bbviepss[plot_idx][plot_N]['weights']
 
-#plot the contours
-wg = 120
-hg = 140
-x = np.linspace(-100, 100, wg)
-y = np.linspace(-100, 100, hg)
+#plot the 2D contours
+wg = 500
+hg = 500
+x = np.linspace(-40, 40, wg)
+y = np.linspace(-40, 40, hg)
 #x = np.linspace(-30, 30, wg)
 #y = np.linspace(-50, 20, hg)
 xx, yy = np.meshgrid(x, y)
-x = xx.reshape(-1,1)
-y = yy.reshape(-1,1)
-X = np.hstack((x,y))
+X = np.hstack((xx.reshape(-1,1), yy.reshape(-1,1)))
 #plot the truth
-Y = logp(X).reshape(hg,wg)
+lp = logp(X).reshape(hg,wg)
 
 #Levels = np.array([0.001, 0.0025, 0.005, 0.01, 0.015, 0.025])
 #Levels = np.array([0.001, .005, 0.015, 0.025])
-Levels = [-12, -10, -8, -6, -4]
+#Levels = np.array([0.0001, 0.0005, 0.001, .005, 0.015, 0.025])
+Levels = [-16, -12, -8, -4]
 
-plt.contour(xx, yy, Y, levels=Levels, colors='black', linewidths=2) #cmap="Blues_r")
+plt.contour(xx, yy, lp, levels=Levels, colors='black', linewidths=2, linestyles='solid') #cmap="Blues_r")
 
 #plot UBVI
-lq = mixture_logpdf(X, u_mu, u_Sig, u_wt)
-Y = lq.reshape(hg,wg)
-plt.contour(xx, yy, Y, levels=Levels, colors=pal[0], linewidths=2) #cmap="Dark2")
-
+lq_ubvi = mixture_logpdf(X, u_mu, u_Sig, u_wt)
+lq_ubvi = lq_ubvi.reshape(hg,wg)
+plt.contour(xx, yy, lq_ubvi, levels=Levels, colors=pal[0], linewidths=2, linestyles='solid') #cmap="Dark2")
 
 #plot BVI
-lq = mixture_logpdf(X, b_mu, b_Sig, b_wt)
-Y = lq.reshape(hg,wg)
-plt.contour(xx, yy, Y, levels=Levels, colors=pal[1], linewidths=2) #cmap="Dark2")
+lq_bvi = mixture_logpdf(X, b_mu, b_Sig, b_wt)
+lq_bvi = lq_bvi.reshape(hg,wg)
+plt.contour(xx, yy, lq_bvi, levels=Levels, colors=pal[1], linewidths=2, linestyles='solid') #cmap="Dark2")
 
 #plot BVI Eps
-lq = mixture_logpdf(X, beps_mu, beps_Sig, beps_wt)
-Y = lq.reshape(hg,wg)
-plt.contour(xx, yy, Y, levels=Levels, colors=pal[2], linewidths=2) #cmap="Dark2")
+lq_bvie = mixture_logpdf(X, beps_mu, beps_Sig, beps_wt)
+lq_bvie = lq_bvie.reshape(hg,wg)
+plt.contour(xx, yy, lq_bvie, levels=Levels, colors=pal[2], linewidths=2, linestyles='solid') #cmap="Dark2")
 
 plt.show()
 
+#plot the 1D marginals
+figX = bkp.figure(width=1000, height=500, x_range=(x.min(), x.max()))
+preprocess_plot(figX, '42pt')
+#plot the truth
+figX.line(x, logsumexp(lp, axis=1), line_width=6.5, color='black', legend='p(x)')
+#plot BVI eps
+figX.line(x, logsumexp(lq_bvie, axis=1), line_width=6.5, color=pal[2], legend='BVI+')
+#plot BVI
+figX.line(x, logsumexp(lq_bvi, axis=1), line_width=6.5, color=pal[1], legend='BVI')
+#plot UBVI
+figX.line(x, logsumexp(lq_ubvi, axis=1), line_width=6.5, color=pal[0], legend='UBVI')
+
+figY = bkp.figure(width=1000, height=500, x_range=(y.min(), y.max()))
+preprocess_plot(figY, '42pt')
+#plot the truth
+figY.line(y, logsumexp(lp, axis=0), line_width=6.5, color='black')
+#plot BVI eps
+figY.line(y, logsumexp(lq_bvie, axis=0), line_width=6.5, color=pal[2])
+#plot BVI
+figY.line(y, logsumexp(lq_bvi, axis=0), line_width=6.5, color=pal[1])
+#plot UBVI
+figY.line(y, logsumexp(lq_ubvi, axis=0), line_width=6.5, color=pal[0])
 
 #plot the KL vs iteration
 fig2 = bkp.figure(width=1000,height=500,x_axis_label='# Components', y_axis_label='KL(p || q)', y_axis_type='log')
@@ -167,6 +192,8 @@ for cput, kl, nm, clrid in [(cput_ubvi, fkl_ubvi, 'UBVI', 0), (cput_bbvi, fkl_bb
 
 
 #postprocess_plot(fig, '42pt')
+postprocess_plot(figX, '42pt', orientation='horizontal', glyph_height=80)
+postprocess_plot(figY, '42pt')
 postprocess_plot(fig2, '42pt')
 postprocess_plot(fig3, '42pt')
 #postprocess_plot(fig4, '42pt')
@@ -175,7 +202,7 @@ postprocess_plot(fig3, '42pt')
 
 
 #bkp.show(bkl.gridplot([[fig, fig2, fig3, fig4, fig5]]))
-bkp.show(bkl.gridplot([[fig2, fig3]]))
+bkp.show(bkl.gridplot([[figX, figY, fig2, fig3]]))
 
 
 
