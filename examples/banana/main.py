@@ -16,7 +16,7 @@ def logp(X):
 np.random.seed(1)
 
 N_runs = 1000
-N = 50
+N = 30
 d = 2
 diag = True
 n_samples = 2000
@@ -50,7 +50,7 @@ for i in range(N_runs):
         bbvi_results.append(bbvi.build(n))
 
     ##BBVI eps
-    bbvi_eps = BBVI(logp, gauss, adam, lmb = lmb, n_init = n_init, n_samples = n_samples, init_inflation = init_inflation)
+    bbvi_eps = BBVI(logp, gauss, adam, lmb = lmb, n_init = n_init, n_samples = n_samples, init_inflation = init_inflation, eps=1e-3)
     bbvi_eps_results = []
     for n in range(1,N+1):
         bbvi_eps_results.append(bbvi_eps.build(n))

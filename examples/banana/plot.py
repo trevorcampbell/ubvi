@@ -74,38 +74,37 @@ beps_wt = bbviepss[plot_idx][plot_N]['weights']
 #plot the contours
 wg = 120
 hg = 140
-x = np.linspace(-30, 30, wg)
-y = np.linspace(-50, 20, hg)
+x = np.linspace(-100, 100, wg)
+y = np.linspace(-100, 100, hg)
+#x = np.linspace(-30, 30, wg)
+#y = np.linspace(-50, 20, hg)
 xx, yy = np.meshgrid(x, y)
 x = xx.reshape(-1,1)
 y = yy.reshape(-1,1)
 X = np.hstack((x,y))
 #plot the truth
-Y = np.exp(logp(X)).reshape(hg,wg)
-Levels = np.array([0.001, 0.0025, 0.005, 0.01, 0.015, 0.025])
-Levels = np.array([0.001, .005, 0.015, 0.025])
+Y = logp(X).reshape(hg,wg)
+
+#Levels = np.array([0.001, 0.0025, 0.005, 0.01, 0.015, 0.025])
+#Levels = np.array([0.001, .005, 0.015, 0.025])
+Levels = [-12, -10, -8, -6, -4]
+
 plt.contour(xx, yy, Y, levels=Levels, colors='black', linewidths=2) #cmap="Blues_r")
 
 #plot UBVI
 lq = mixture_logpdf(X, u_mu, u_Sig, u_wt)
-Y = np.exp(lq).reshape(hg,wg)
-Levels = np.array([0.001, 0.0025, 0.005, 0.01, 0.015, 0.025])
-Levels = np.array([0.001, .005, 0.015, 0.025])
+Y = lq.reshape(hg,wg)
 plt.contour(xx, yy, Y, levels=Levels, colors=pal[0], linewidths=2) #cmap="Dark2")
 
 
 #plot BVI
 lq = mixture_logpdf(X, b_mu, b_Sig, b_wt)
-Y = np.exp(lq).reshape(hg,wg)
-Levels = np.array([0.001, 0.0025, 0.005, 0.01, 0.015, 0.025])
-Levels = np.array([0.001, .005, 0.015, 0.025])
+Y = lq.reshape(hg,wg)
 plt.contour(xx, yy, Y, levels=Levels, colors=pal[1], linewidths=2) #cmap="Dark2")
 
 #plot BVI Eps
 lq = mixture_logpdf(X, beps_mu, beps_Sig, beps_wt)
-Y = np.exp(lq).reshape(hg,wg)
-Levels = np.array([0.001, 0.0025, 0.005, 0.01, 0.015, 0.025])
-Levels = np.array([0.001, .005, 0.015, 0.025])
+Y = lq.reshape(hg,wg)
 plt.contour(xx, yy, Y, levels=Levels, colors=pal[2], linewidths=2) #cmap="Dark2")
 
 plt.show()

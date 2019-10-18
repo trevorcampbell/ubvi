@@ -15,8 +15,8 @@ p_samps = np.random.standard_cauchy(10000)[:,np.newaxis]
 
 #load results
 f = open('results/cauchy.pk', 'rb')
-#ubvis, bbvis, bbviepss = pk.load(f)
-ubvis, bbvis = pk.load(f)
+ubvis, bbvis, bbviepss = pk.load(f)
+#ubvis, bbvis = pk.load(f)
 f.close()
 
 N_runs = len(ubvis)
@@ -47,7 +47,7 @@ print('UBVI: ' + str(np.diff(cput_ubvi, axis=1).mean()) + '+/-' + str(np.diff(cp
 print('BVI: ' + str(np.diff(cput_bbvi, axis=1).mean()) + '+/-' + str(np.diff(cput_bbvi, axis=1).std()))
 print('BVI Eps: ' + str(np.diff(cput_bbvieps, axis=1).mean()) + '+/-' + str(np.diff(cput_bbvieps, axis=1).std()))
 
-plot_idx = 0
+plot_idx = 1
 plot_N = 29
 u_mu = ubvis[plot_idx][plot_N]['mus']
 u_Sig = ubvis[plot_idx][plot_N]['Sigs']
@@ -62,20 +62,20 @@ beps_Sig = bbviepss[plot_idx][plot_N]['Sigs']
 beps_wt = bbviepss[plot_idx][plot_N]['weights']
 
 #plot the fit
-X = np.linspace(-20,20,4000)
+X = np.linspace(-100,100,4000)
 fig = bkp.figure(width=1000, height=1000, x_range=(X.min(), X.max()))
 preprocess_plot(fig, '42pt')
 #plot the truth
-fig.line(X, np.exp(logp(X)), line_width=6.5, color='black', legend='p(x)')
+fig.line(X, logp(X), line_width=6.5, color='black', legend='p(x)')
 #plot BVI eps
 lq = mixture_logpdf(X[:, np.newaxis], beps_mu, beps_Sig, beps_wt)
-fig.line(X, np.exp(lq), line_width=6.5, color=pal[2], legend='BVI70')
+fig.line(X, lq, line_width=6.5, color=pal[2], legend='BVI+')
 #plot BVI
 lq = mixture_logpdf(X[:, np.newaxis], b_mu, b_Sig, b_wt)
-fig.line(X, np.exp(lq), line_width=6.5, color=pal[1], legend='BVI1')
+fig.line(X, lq, line_width=6.5, color=pal[1], legend='BVI')
 #plot UBVI
 lq = mixture_logpdf(X[:, np.newaxis], u_mu, u_Sig, u_wt)
-fig.line(X, np.exp(lq), line_width=6.5, color=pal[0], legend='UBVI')
+fig.line(X, lq, line_width=6.5, color=pal[0], legend='UBVI')
 
 #plot UBVI samples
 #samps = mixture_sample(u_mu, u_Sig, u_wt, 50000)
