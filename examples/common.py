@@ -19,15 +19,36 @@ var trns = [
 '\u2076',
 '\u2077',
 '\u2078',
-'\u2079']
-if (Math.log10(tick) < 0){
-  return '10\u207B'+trns[Math.round(Math.abs(Math.log10(tick)))];
-} else {
-  return '10'+trns[Math.round(Math.abs(Math.log10(tick)))];
+'\u2079'];
+if (tick == 0){
+    tick = 1e-300
 }
+var tick_power = Math.floor(Math.log10(tick));
+var tick_mult = Math.pow(10, Math.log10(tick) - tick_power);
+var ret = '';
+if (tick_mult > 1.) {
+  if (Math.abs(tick_mult - Math.round(tick_mult)) > 0.05){
+    ret = tick_mult.toFixed(1) + '\u22C5';
+  } else {
+    ret = tick_mult.toFixed(0) +'\u22C5';
+  }
+}
+ret += '10';
+if (tick_power < 0){
+  ret += '\u207B';
+  tick_power = -tick_power;
+}
+power_digits = []
+while (tick_power > 9){
+  power_digits.push( tick_power - Math.floor(tick_power/10)*10 )
+  tick_power = Math.floor(tick_power/10)
+}
+power_digits.push(tick_power)
+for (i = power_digits.length-1; i >= 0; i--){
+  ret += trns[power_digits[i]];
+}
+return ret;
 """)
-
-
 
 
 def preprocess_plot(fig, axis_font_size, log_scale_x = False, log_scale_y = False):

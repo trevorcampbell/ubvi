@@ -124,7 +124,7 @@ fig2.line(np.arange(fkl_bbvieps.shape[1])+1, np.percentile(fkl_bbvieps, 25, axis
 fig2.line(np.arange(fkl_bbvieps.shape[1])+1, np.percentile(fkl_bbvieps, 75, axis=0), line_width=6.5, color=pal[2], line_dash='dashed')
 
 #plot the KL vs cput
-fig3 = bkp.figure(width=1000,height=500,x_axis_label='CPU Time (s)', y_axis_label='KL(p || q)', y_axis_type='log')
+fig3 = bkp.figure(width=1000,height=500,x_axis_label='CPU Time (s)', y_axis_label='KL(p || q)', y_axis_type='log', x_axis_type='log')
 preprocess_plot(fig3, '42pt', log_scale_x = True, log_scale_y = True)
 #for cput, kl, nm, clrid in [(cput_ubvi, fkl_ubvi, 'UBVI', 0), (cput_bbvi, fkl_bbvi, 'BVI1', 1)]:
 for cput, kl, nm, clrid in [(cput_ubvi, fkl_ubvi, 'UBVI', 0), (cput_bbvi, fkl_bbvi, 'BVI1', 1), (cput_bbvieps, fkl_bbvieps, 'BVIEps', 2)]:
