@@ -12,7 +12,7 @@ def logp(x):
 
 np.random.seed(1)
 
-N_runs = 1000
+N_runs = 20
 N = 30
 d = 1
 diag = True
