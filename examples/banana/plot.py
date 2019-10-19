@@ -77,8 +77,8 @@ beps_Sig = bbviepss[plot_idx][plot_N]['Sigs']
 beps_wt = bbviepss[plot_idx][plot_N]['weights']
 
 #plot the 2D contours
-wg = 500
-hg = 500
+wg = 200
+hg = 200
 x = np.linspace(-40, 40, wg)
 y = np.linspace(-40, 40, hg)
 #x = np.linspace(-30, 30, wg)

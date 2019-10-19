@@ -37,20 +37,19 @@ nms = ['synth', 'ds1', 'phish']
 ds = [2, 10, 10]
 
 figs = []
-#n_energy_dist_samples = 1000
-#n_theta_subsample = 10000
-n_energy_dist_samples = 100
-n_theta_subsample = 100
+n_energy_dist_samples = 10000
+n_theta_subsample = 10000
 
-fig = bkp.figure(width=1000, height=1000, y_axis_type='log', x_axis_label='# Components', y_axis_label='Energy Dist.')
-preprocess_plot(fig, '42pt', True, False)
-
-fig2 = bkp.figure(width=1000, height=1000, y_axis_type='log', x_axis_type='log', x_axis_label='CPU Time (s)', y_axis_label='Energy Dist.')
-preprocess_plot(fig2, '42pt', True, True)
-
-figs = [[fig, fig2]]
-
+figs = []
 for nm, d in zip(nms, ds):
+  fig = bkp.figure(width=1000, height=500, y_axis_type='log', x_axis_label='# Components', y_axis_label='Energy Dist.')
+  preprocess_plot(fig, '42pt', True, False)
+  
+  fig2 = bkp.figure(width=1000, height=500, y_axis_type='log', x_axis_type='log', x_axis_label='CPU Time (s)', y_axis_label='Energy Dist.')
+  preprocess_plot(fig2, '42pt', True, True)
+
+  figs.append([fig, fig2])
+
   samps = np.load('results/logistic_samples_'+nm+'.npy')
   theta0s = samps[:, :, 0]
   theta0s=theta0s.reshape(theta0s.shape[0]*theta0s.shape[1])
@@ -162,11 +161,11 @@ for nm, d in zip(nms, ds):
   fig.line(np.arange(energy_ubvi.shape[1])+1, eubvi25, color=pal[0], line_dash='dashed', legend='UBVI',line_width=3)
   fig.line(np.arange(energy_ubvi.shape[1])+1, eubvi75, color=pal[0], line_dash='dashed', legend='UBVI',line_width=3)
 
-  fig.line(np.arange(energy_bbvi.shape[1])+1, ebbvi50, color=pal[1], legend='BVI',line_width=10)
-  fig.line(np.arange(energy_bbvi.shape[1])+1, ebbvi25, color=pal[1], line_dash='dashed', legend='BVI',line_width=3)
-  fig.line(np.arange(energy_bbvi.shape[1])+1, ebbvi75, color=pal[1], line_dash='dashed', legend='BVI',line_width=3)
+  fig.line(np.arange(energy_bbvi.shape[1])+1, ebbvi50, color=pal[2], legend='BVI+',line_width=10)
+  fig.line(np.arange(energy_bbvi.shape[1])+1, ebbvi25, color=pal[2], line_dash='dashed', legend='BVI+',line_width=3)
+  fig.line(np.arange(energy_bbvi.shape[1])+1, ebbvi75, color=pal[2], line_dash='dashed', legend='BVI+',line_width=3)
 
-  fig.line(np.arange(energy_ubvi.shape[1])+1, np.ones(energy_ubvi.shape[1]),   color=pal[2], legend='ADVI',line_width=10)
+  fig.line(np.arange(energy_ubvi.shape[1])+1, np.ones(energy_ubvi.shape[1]),   color=pal[1], legend='ADVI',line_width=10)
   #3fig.line(np.arange(energy_ubvi.shape[1])+1, np.ones(energy_ubvi.shape[1])*(eadvi25), color=pal[2], line_dash='dashed', legend='ADVI',line_width=3)
   #3fig.line(np.arange(energy_ubvi.shape[1])+1, np.ones(energy_ubvi.shape[1])*(eadvi75), color=pal[2], line_dash='dashed', legend='ADVI', line_width=3)
 
@@ -176,16 +175,16 @@ for nm, d in zip(nms, ds):
   fig2.segment(x0=cubvi25, x1 = cubvi75, y0 = eubvi50, y1 = eubvi50, color=pal[0], legend='UBVI', line_width=4)
   fig2.segment(x0=cubvi50, x1 = cubvi50, y0 = eubvi25, y1 = eubvi75, color=pal[0], legend='UBVI', line_width=4)
 
-  fig2.circle(cbbvi50, ebbvi50, color=pal[1], legend='BVI', size=20)
-  fig2.segment(x0=cbbvi25, x1 = cbbvi75, y0 = ebbvi50, y1 = ebbvi50, color=pal[1], legend='BVI', line_width=4)
-  fig2.segment(x0=cbbvi50, x1 = cbbvi50, y0 = ebbvi25, y1 = ebbvi75, color=pal[1], legend='BVI', line_width=4)
+  fig2.circle(cbbvi50, ebbvi50, color=pal[2], legend='BVI+', size=20)
+  fig2.segment(x0=cbbvi25, x1 = cbbvi75, y0 = ebbvi50, y1 = ebbvi50, color=pal[2], legend='BVI+', line_width=4)
+  fig2.segment(x0=cbbvi50, x1 = cbbvi50, y0 = ebbvi25, y1 = ebbvi75, color=pal[2], legend='BVI+', line_width=4)
 
-  fig2.circle(1., 1., color=pal[2], legend='ADVI', size=20)
+  fig2.circle(1., 1., color=pal[1], legend='VI', size=20)
   #fig.segment(x0=cadvi25, x1 = cadvi75, y0 = eadvi50, y1 = eadvi50, color=pal[2], legend='ADVI', line_width=4)
   #fig.segment(x0=cadvi50, x1 = cadvi50, y0 = eadvi25, y1 = eadvi75, color=pal[2], legend='ADVI', line_width=4)
 
-postprocess_plot(fig, '36pt')
-postprocess_plot(fig2, '36pt')
+  postprocess_plot(fig, '36pt')
+  postprocess_plot(fig2, '36pt')
 bkp.show(bkl.gridplot(figs))
   
 

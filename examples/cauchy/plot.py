@@ -47,7 +47,7 @@ print('UBVI: ' + str(np.diff(cput_ubvi, axis=1).mean()) + '+/-' + str(np.diff(cp
 print('BVI: ' + str(np.diff(cput_bbvi, axis=1).mean()) + '+/-' + str(np.diff(cput_bbvi, axis=1).std()))
 print('BVI Eps: ' + str(np.diff(cput_bbvieps, axis=1).mean()) + '+/-' + str(np.diff(cput_bbvieps, axis=1).std()))
 
-plot_idx = 3
+plot_idx = 0
 plot_N = 29
 u_mu = ubvis[plot_idx][plot_N]['mus']
 u_Sig = ubvis[plot_idx][plot_N]['Sigs']
@@ -80,7 +80,7 @@ fig.line(X, np.exp(lq), line_width=6.5, color=pal[0], legend='UBVI')
 #plot the log fit
 X = np.linspace(-100,100,4000)
 figL = bkp.figure(width=1000, height=1000, x_range=(X.min(), X.max()))
-preprocess_plot(fig, '42pt')
+preprocess_plot(figL, '42pt')
 #plot the truth
 figL.line(X, logp(X), line_width=6.5, color='black')
 #plot BVI eps
@@ -159,7 +159,7 @@ for cput, kl, nm, clrid in [(cput_ubvi, fkl_ubvi, 'UBVI', 0), (cput_bbvi, fkl_bb
 #  fig5.segment(x0=cput_25, y0=rkl_50, x1=cput_75, y1=rkl_50, color=pal[clrid], line_width=4)#, legend=nm)
 
 
-postprocess_plot(fig, '42pt', orientation='horizontal', glyph_height=80)
+postprocess_plot(fig, '42pt') #, orientation='horizontal', glyph_height=80)
 postprocess_plot(figL, '42pt')
 postprocess_plot(fig2, '42pt')
 postprocess_plot(fig3, '42pt')
@@ -169,7 +169,7 @@ postprocess_plot(fig3, '42pt')
 
 
 #bkp.show(bkl.gridplot([[fig, fig2, fig3, fig4, fig5]]))
-bkp.show(bkl.gridplot([[fig, fig2, fig3]]))
+bkp.show(bkl.gridplot([[fig, figL, fig2, fig3]]))
 
 
 
