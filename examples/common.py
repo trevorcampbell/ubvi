@@ -63,7 +63,7 @@ def preprocess_plot(fig, axis_font_size, log_scale_x = False, log_scale_y = Fals
     #fig.toolbar.logo = None
     #fig.toolbar_location = None
 
-def postprocess_plot(fig, legend_font_size, orientation='vertical', location='top_right', glyph_width=80, glyph_height=40):
+def postprocess_plot(fig, legend_font_size, orientation='vertical', location='top_right', glyph_width=80, glyph_height=40, show_legend=True):
     fig.legend.label_text_font_size= legend_font_size
     fig.legend.orientation=orientation
     fig.legend.location=location
@@ -72,6 +72,7 @@ def postprocess_plot(fig, legend_font_size, orientation='vertical', location='to
     fig.legend.spacing=5
     fig.xgrid.grid_line_color=None
     fig.ygrid.grid_line_color=None
+    fig.legend.visible = show_legend
 
 def mixture_logpdf(X, mu, Sig, wt):
     if len(Sig.shape) < 3:

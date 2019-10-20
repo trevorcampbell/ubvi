@@ -122,7 +122,7 @@ for nm, d in zip(nms, ds):
     #BBVI
     #compute energy distances
     for i in range(len(bbvi)):
-      print('computing energy dist: ' + nm + ' UBVI ' + str(n+1) +'/'+str(len(fnames))+ ' results files, iter ' + str(i+1) + '/' + str(len(bbvi)))
+      print('computing energy dist: ' + nm + ' BBVI ' + str(n+1) +'/'+str(len(fnames))+ ' results files, iter ' + str(i+1) + '/' + str(len(bbvi)))
       energy_bbvi[n, i] = mixture_energy_dist(thetas, bbvi[i]['mus'], bbvi[i]['Sigs'], bbvi[i]['weights'], n_energy_dist_samples)
       cput_bbvi[n, i] = bbvi[i]['cput']
 
@@ -183,8 +183,12 @@ for nm, d in zip(nms, ds):
   #fig.segment(x0=cadvi25, x1 = cadvi75, y0 = eadvi50, y1 = eadvi50, color=pal[2], legend='ADVI', line_width=4)
   #fig.segment(x0=cadvi50, x1 = cadvi50, y0 = eadvi25, y1 = eadvi75, color=pal[2], legend='ADVI', line_width=4)
 
-  postprocess_plot(fig, '36pt')
-  postprocess_plot(fig2, '36pt')
+  if nm == 'synth':
+    postprocess_plot(fig, '36pt', orientation='horizontal', location='bottom_left')
+    postprocess_plot(fig2, '36pt', show_legend=False)
+  else:
+    postprocess_plot(fig, '36pt', show_legend=False)
+    postprocess_plot(fig2, '36pt', show_legend=False)
 bkp.show(bkl.gridplot(figs))
   
 
